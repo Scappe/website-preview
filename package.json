@@ -1,10 +1,10 @@
 {
   "name": "axante-website-preview",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/publish-site.mjs"
+    "build": "node scripts/generate-pages.mjs && node scripts/publish-site.mjs"
   },
   "engines": {
     "node": ">=20"
