@@ -32,25 +32,29 @@ function walk(directory) {
     html = html.replace(/(<img[^>]+src="\/assets\/media\/axante-logo\.png"[^>]*?)\sheight="[^"]+"/g, '$1');
     html = html.replace(/(<img[^>]+src="\/assets\/media\/(?:casarossa|unicart|carabetta|weblab|tda)\.jpg"[^>]*)(>)/g, (match, start, end) => start.includes('decoding=') ? match : `${start} decoding="async"${end}`);
     html = html.replace('src="/assets/media/casarossa.jpg" width="1400" height="1000" loading="lazy"', 'src="/assets/media/casarossa.jpg" width="1400" height="1000" loading="eager" fetchpriority="high"');
-    html = html.replace('/portfolio-v5.css"', '/portfolio-v5.css?v=6.1"');
-    html = html.replace('/home-v5.css"', '/home-v5.css?v=6.1"');
-    html = html.replace('/home-v5.js"', '/home-v5.js?v=6.1"');
+    html = html.replace('/portfolio-v5.css"', '/portfolio-v5.css?v=6.2"');
+    html = html.replace('/home-v5.css"', '/home-v5.css?v=6.2"');
+    html = html.replace('/home-v5.js"', '/home-v5.js?v=6.2"');
 
     const isHome = fullPath === path.join(site, 'index.html');
     const isPortfolio = fullPath === path.join(site, 'portfolio', 'index.html');
     const isStandalone404 = fullPath === path.join(site, '404.html');
     if (!isHome && !isPortfolio && !isStandalone404) {
-      if (!html.includes('/enhance-v5.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/enhance-v5.css?v=6.1"></head>');
-      if (!html.includes('/enhance-v5.js')) html = html.replace('</body>', '<script src="/enhance-v5.js?v=6.1" defer></script></body>');
+      if (!html.includes('/enhance-v5.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/enhance-v5.css?v=6.2"></head>');
+      if (!html.includes('/enhance-v5.js')) html = html.replace('</body>', '<script src="/enhance-v5.js?v=6.2" defer></script></body>');
       html = html.replace('class="page-hero"', 'class="page-hero" data-ghost="AXANTE"');
     }
 
-    if (!html.includes('/fixes-v6.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/fixes-v6.css?v=6.1"></head>');
-    if (!html.includes('/fixes-v6.js')) html = html.replace('</body>', '<script src="/fixes-v6.js?v=6.1" defer></script></body>');
+    if (isPortfolio && !html.includes('/portfolio-mobile-performance.css')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/portfolio-mobile-performance.css?v=6.2"></head>');
+    }
+
+    if (!html.includes('/fixes-v6.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/fixes-v6.css?v=6.2"></head>');
+    if (!html.includes('/fixes-v6.js')) html = html.replace('</body>', '<script src="/fixes-v6.js?v=6.2" defer></script></body>');
 
     fs.writeFileSync(fullPath, html);
   }
 }
 
 walk(site);
-console.log('Applied Axante v6.1 local runtime assets, repairs, mobile effects and SEO-safe cache-busting.');
+console.log('Applied Axante v6.2 local assets, mobile performance fixes and cache-busting.');
