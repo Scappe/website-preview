@@ -28,4 +28,20 @@ function walk(directory) {
 }
 
 walk(site);
-console.log('Applied Axante v5 visual and interaction layer to internal pages.');
+
+const homeJs = path.join(site, 'home-v5.js');
+if (fs.existsSync(homeJs)) {
+  let js = fs.readFileSync(homeJs, 'utf8');
+  js = js.replace(
+`      node.addEventListener('click', event => {
+        if (!node.classList.contains('active')) {
+          event.preventDefault();
+          activate(node);
+        }
+      });`,
+`      node.addEventListener('pointerdown', () => activate(node));`
+  );
+  fs.writeFileSync(homeJs, js);
+}
+
+console.log('Applied Axante v5 visual layer and interaction safeguards.');
