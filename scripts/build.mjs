@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
-import tar from 'tar';
+import * as tar from 'tar';
 
 const root = process.cwd();
 const bundleDir = path.join(root, 'bundle');
