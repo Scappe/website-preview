@@ -1,0 +1,56 @@
+name: Publish Axante v2 bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "bundle/**"
+      - ".github/workflows/publish-axante-v2.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and extract website
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bundle-build dist
+          mkdir -p .bundle-build/extracted dist
+          find bundle -maxdepth 1 -type f -name 'part-*.b64' -print0 | sort -z | xargs -0 cat | tr -d '\r\n\t ' | base64 --decode > .bundle-build/axante-v2.tar.gz
+          gzip -t .bundle-build/axante-v2.tar.gz
+          tar -tzf .bundle-build/axante-v2.tar.gz >/dev/null
+          tar -xzf .bundle-build/axante-v2.tar.gz --no-same-owner --no-same-permissions -C .bundle-build/extracted
+          INDEX_FILE="$(find .bundle-build/extracted -type f -name index.html -printf '%d %p\n' | sort -n | head -n 1 | cut -d' ' -f2-)"
+          test -n "$INDEX_FILE"
+          SITE_ROOT="$(dirname "$INDEX_FILE")"
+          cp -a "$SITE_ROOT"/. dist/
+          test -f dist/index.html
+          find dist -name '.DS_Store' -delete
+          echo "Published files:"
+          find dist -maxdepth 2 -type f | sort | head -200
+
+      - name: Commit extracted website
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A dist
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git commit -m "build: publish extracted Axante v2 website [skip ci]"
+          git push origin main
