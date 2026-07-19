@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import sharp from 'sharp';
 
 const root = path.join(process.cwd(), 'dist');
 const failures = [];
+const socialImage = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
 const requiredFiles = [
   'index.html',
   'home-v5.css',
@@ -19,6 +21,7 @@ const requiredFiles = [
   'robots.txt',
   '404.html',
   'assets/media/axante-logo.png',
+  'assets/media/axante-share-v1.png',
   'assets/media/casarossa.jpg',
   'assets/media/unicart.jpg',
   'assets/media/carabetta.jpg',
@@ -57,6 +60,13 @@ for (const file of htmlFiles) {
   for (const token of requiredTokens) {
     if (!html.includes(token)) failures.push(`${relative}: missing ${token}`);
   }
+  if (!html.includes(`<meta property="og:image" content="${socialImage}">`)) failures.push(`${relative}: missing branded og:image`);
+  if (!html.includes('<meta property="og:image:width" content="1200">')) failures.push(`${relative}: missing og:image width`);
+  if (!html.includes('<meta property="og:image:height" content="630">')) failures.push(`${relative}: missing og:image height`);
+  if (!html.includes('<meta property="og:image:type" content="image/png">')) failures.push(`${relative}: missing og:image MIME type`);
+  if (!html.includes('<meta name="twitter:card" content="summary_large_image">')) failures.push(`${relative}: missing large Twitter card`);
+  const socialTags = html.match(/<meta[^>]+(?:og:image|twitter:image)[^>]*>/gi)?.join('') || '';
+  if (/casarossa-screenshot\.jpg/i.test(socialTags)) failures.push(`${relative}: Casa Rossa is still used as a social preview`);
   if (/class="case-media clip-reveal"/.test(html)) failures.push(`${relative}: project media can still be clipped invisible`);
   if (/src="https:\/\/www\.axante\.it\/wp-content\/uploads/i.test(html)) failures.push(`${relative}: runtime image still hotlinks WordPress`);
   if (/home-v4\.(css|js)|portfolio-v4\.css/.test(html)) failures.push(`${relative}: obsolete v4 asset reference`);
@@ -76,7 +86,7 @@ if (!/\.footer-brand img[^}]*height:auto/.test(css)) failures.push('home-v5.css:
 const portfolioHtml = fs.existsSync(path.join(root, 'portfolio', 'index.html')) ? fs.readFileSync(path.join(root, 'portfolio', 'index.html'), 'utf8') : '';
 const performanceCss = fs.existsSync(path.join(root, 'portfolio-mobile-performance.css')) ? fs.readFileSync(path.join(root, 'portfolio-mobile-performance.css'), 'utf8') : '';
 const fixesJs = fs.existsSync(path.join(root, 'fixes-v6.js')) ? fs.readFileSync(path.join(root, 'fixes-v6.js'), 'utf8') : '';
-if (!portfolioHtml.includes('/portfolio-mobile-performance.css?v=6.2')) failures.push('portfolio/index.html: mobile performance layer is not linked');
+if (!portfolioHtml.includes('/portfolio-mobile-performance.css?v=6.3')) failures.push('portfolio/index.html: mobile performance layer is not linked');
 if (!/\.portfolio-page \.case-study[^}]*transform:none!important/.test(performanceCss)) failures.push('portfolio-mobile-performance.css: cards are not protected from scroll transforms');
 if (!fixesJs.includes("!element.closest('.portfolio-page')")) failures.push('fixes-v6.js: portfolio cards can re-enter the per-frame animation loop');
 
@@ -85,10 +95,22 @@ for (const asset of requiredFiles.filter(file => file.startsWith('assets/media/'
   if (bytes < 500) failures.push(`${asset}: file is empty or invalid (${bytes} bytes)`);
 }
 
+const socialPath = path.join(root, 'assets/media/axante-share-v1.png');
+if (fs.existsSync(socialPath)) {
+  try {
+    const metadata = await sharp(socialPath).metadata();
+    if (metadata.width !== 1200 || metadata.height !== 630 || metadata.format !== 'png') {
+      failures.push(`Social image has invalid metadata: ${metadata.width}x${metadata.height} ${metadata.format}`);
+    }
+  } catch (error) {
+    failures.push(`Unable to inspect social image: ${error.message}`);
+  }
+}
+
 if (failures.length) {
   console.error('\nSITE QA FAILED');
   failures.forEach(failure => console.error(`- ${failure}`));
   process.exit(1);
 }
 
-console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages and ${requiredFiles.length} critical files verified.`);
+console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files and branded social previews verified.`);
