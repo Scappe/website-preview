@@ -1,0 +1,46 @@
+name: Capture Vercel diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/capture-vercel-diagnostic.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for production alias
+        run: sleep 15
+
+      - name: Download diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          curl --fail --silent --show-error --location --retry 5 --retry-delay 3 \
+            https://website-preview-murex.vercel.app/build-debug.json \
+            --output diagnostics/vercel-build-debug.json
+          cat diagnostics/vercel-build-debug.json
+
+      - name: Commit diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/vercel-build-debug.json
+          if git diff --cached --quiet; then
+            echo "Diagnostic unchanged."
+            exit 0
+          fi
+          git commit -m "chore: capture Vercel build diagnostic [skip ci]"
+          git push origin main
