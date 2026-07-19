@@ -1,0 +1,81 @@
+name: Validate production website
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "assets/**"
+      - "scripts/generate-pages.mjs"
+      - "scripts/publish-site.mjs"
+      - "package.json"
+      - "vercel.json"
+      - ".github/workflows/validate-production.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Vercel production alias
+        run: sleep 35
+      - name: Validate pages and assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, time, urllib.request, urllib.error
+          base = 'https://website-preview-murex.vercel.app'
+          paths = ['/', '/servizi/', '/portfolio/', '/chi-siamo/', '/contatti/', '/siti-web/', '/marketing/', '/branding/', '/sviluppo/', '/lavora-con-noi/', '/sitemap.xml', '/robots.txt', '/styles.css', '/script.js', '/assets/axante-logo.svg', '/assets/project-carabetta.svg', '/assets/project-unicart.svg', '/assets/project-weblab.svg', '/assets/project-tda.svg']
+          results = []
+          ok = True
+          for path in paths:
+              item = {'path': path}
+              try:
+                  request = urllib.request.Request(base + path, headers={'User-Agent': 'Axante-production-validator/1.0'})
+                  with urllib.request.urlopen(request, timeout=25) as response:
+                      data = response.read()
+                      text = data.decode('utf-8', errors='ignore')
+                      item.update(status=response.status, bytes=len(data), content_type=response.headers.get('content-type', ''))
+                      checks = []
+                      if path.endswith('/'):
+                          checks.extend([
+                              ('html', '<!doctype html' in text.lower()),
+                              ('css-linked', '/styles.css' in text),
+                              ('local-logo', '/assets/axante-logo.svg' in text),
+                              ('no-bundle-error', 'Unable to reconstruct the website archive' not in text),
+                              ('not-old-page', 'Axante growth dashboard' not in text)
+                          ])
+                      elif path == '/sitemap.xml':
+                          checks.append(('sitemap-valid', '<urlset' in text and '/portfolio/' in text))
+                      elif path == '/robots.txt':
+                          checks.append(('robots-valid', 'Sitemap:' in text))
+                      item['checks'] = {name: value for name, value in checks}
+                      if response.status != 200 or any(not value for _, value in checks):
+                          ok = False
+              except Exception as error:
+                  item['error'] = str(error)
+                  ok = False
+              results.append(item)
+          report = {'ok': ok, 'base': base, 'checked_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'results': results}
+          import os
+          os.makedirs('diagnostics', exist_ok=True)
+          with open('diagnostics/production-validation.json', 'w') as file:
+              json.dump(report, file, indent=2)
+          print(json.dumps(report, indent=2))
+          if not ok:
+              raise SystemExit(1)
+          PY
+      - name: Commit validation report
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/production-validation.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "test: verify Axante production pages [skip ci]"
+          git push origin main
