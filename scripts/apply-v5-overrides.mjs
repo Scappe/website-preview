@@ -19,7 +19,7 @@ function walk(directory) {
       walk(fullPath);
       continue;
     }
-    if (!entry.isFile() || entry.name !== 'index.html') continue;
+    if (!entry.isFile() || !entry.name.endsWith('.html')) continue;
 
     let html = fs.readFileSync(fullPath, 'utf8');
     for (const [remote, local] of replacements) html = html.split(remote).join(local);
@@ -35,7 +35,8 @@ function walk(directory) {
 
     const isHome = fullPath === path.join(site, 'index.html');
     const isPortfolio = fullPath === path.join(site, 'portfolio', 'index.html');
-    if (!isHome && !isPortfolio) {
+    const isStandalone404 = fullPath === path.join(site, '404.html');
+    if (!isHome && !isPortfolio && !isStandalone404) {
       if (!html.includes('/enhance-v5.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/enhance-v5.css?v=6.0"></head>');
       if (!html.includes('/enhance-v5.js')) html = html.replace('</body>', '<script src="/enhance-v5.js?v=6.0" defer></script></body>');
       html = html.replace('class="page-hero"', 'class="page-hero" data-ghost="AXANTE"');
@@ -49,4 +50,4 @@ function walk(directory) {
 }
 
 walk(site);
-console.log('Applied Axante v6 local assets, repairs, mobile effects and cache-busting.');
+console.log('Applied Axante v6 local assets, repairs, mobile effects and cache-busting to every HTML page.');
