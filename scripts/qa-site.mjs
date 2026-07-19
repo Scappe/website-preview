@@ -8,6 +8,9 @@ const requiredFiles = [
   'home-v5.css',
   'home-v5.js',
   'portfolio-v5.css',
+  'portfolio-mobile-performance.css',
+  'fixes-v6.css',
+  'fixes-v6.js',
   'styles.css',
   'script.js',
   'enhance-v5.css',
@@ -69,6 +72,13 @@ for (const file of htmlFiles) {
 const css = fs.existsSync(path.join(root, 'home-v5.css')) ? fs.readFileSync(path.join(root, 'home-v5.css'), 'utf8') : '';
 if (!/overflow-x:(?:clip|hidden)/.test(css)) failures.push('home-v5.css: no root horizontal overflow safeguard');
 if (!/\.footer-brand img[^}]*height:auto/.test(css)) failures.push('home-v5.css: footer logo aspect ratio is not protected');
+
+const portfolioHtml = fs.existsSync(path.join(root, 'portfolio', 'index.html')) ? fs.readFileSync(path.join(root, 'portfolio', 'index.html'), 'utf8') : '';
+const performanceCss = fs.existsSync(path.join(root, 'portfolio-mobile-performance.css')) ? fs.readFileSync(path.join(root, 'portfolio-mobile-performance.css'), 'utf8') : '';
+const fixesJs = fs.existsSync(path.join(root, 'fixes-v6.js')) ? fs.readFileSync(path.join(root, 'fixes-v6.js'), 'utf8') : '';
+if (!portfolioHtml.includes('/portfolio-mobile-performance.css?v=6.2')) failures.push('portfolio/index.html: mobile performance layer is not linked');
+if (!/\.portfolio-page \.case-study[^}]*transform:none!important/.test(performanceCss)) failures.push('portfolio-mobile-performance.css: cards are not protected from scroll transforms');
+if (!fixesJs.includes("!element.closest('.portfolio-page')")) failures.push('fixes-v6.js: portfolio cards can re-enter the per-frame animation loop');
 
 for (const asset of requiredFiles.filter(file => file.startsWith('assets/media/'))) {
   const bytes = fs.existsSync(path.join(root, asset)) ? fs.statSync(path.join(root, asset)).size : 0;
