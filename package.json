@@ -1,12 +1,15 @@
 {
   "name": "axante-website-preview",
-  "version": "6.0.0",
+  "version": "6.3.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/cache-assets.mjs && node scripts/generate-home.mjs && node scripts/generate-pages.mjs && node scripts/generate-portfolio-v4.mjs && node scripts/apply-v5-overrides.mjs && node scripts/publish-site.mjs && node scripts/qa-site.mjs"
+    "build": "node scripts/cache-assets.mjs && node scripts/generate-og-image.mjs && node scripts/generate-home.mjs && node scripts/generate-pages.mjs && node scripts/generate-portfolio-v4.mjs && node scripts/apply-v5-overrides.mjs && node scripts/publish-site.mjs && node scripts/qa-site.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.35.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9.0"
   }
 }
