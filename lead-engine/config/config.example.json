@@ -1,0 +1,22 @@
+{
+  "project_name": "Axante Proposal Engine",
+  "timezone": "Europe/Rome",
+  "daily_lead_limit": 10,
+  "preview_mode": "path",
+  "preview_base_url": "https://website-preview-murex.vercel.app",
+  "preview_path_prefix": "/p/",
+  "custom_domain": null,
+  "custom_domain_pattern": "{slug}.demo.{domain}",
+  "default_area": "Roma",
+  "default_sector": null,
+  "default_template": "service-premium",
+  "minimum_personalization_evidence": 2,
+  "minimum_problems": 3,
+  "minimum_opportunities": 3,
+  "require_verified_email": true,
+  "require_approved_for_contact": true,
+  "publish_noindex": true,
+  "include_in_public_sitemap": false,
+  "batch_draft_path": "lead-engine/batches/drafts/{date}.json",
+  "batch_ready_path": "lead-engine/batches/ready/{date}.json"
+}
