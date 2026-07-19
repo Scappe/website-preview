@@ -1,0 +1,9 @@
+{
+  "name": "Axante",
+  "short_name": "Axante",
+  "description": "Web agency e studio creativo a Roma orientato ai risultati.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090d",
+  "theme_color": "#09090d"
+}

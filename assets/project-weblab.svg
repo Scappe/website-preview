@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+<title id="title">WebLab TdA</title><desc id="desc">B2B digital experience</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071719"/><stop offset="1" stop-color="#123C42"/></linearGradient><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#58E3D2"/><stop offset="1" stop-color="#123C42"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#bg)"/>
+<circle cx="1060" cy="40" r="280" fill="#58E3D2" opacity=".18"/><circle cx="80" cy="770" r="250" fill="#fff" opacity=".04"/>
+<rect x="120" y="95" width="960" height="610" rx="36" fill="#101017" stroke="#fff" stroke-opacity=".14"/>
+<rect x="165" y="150" width="330" height="500" rx="28" fill="url(#g2)"/>
+<rect x="540" y="150" width="495" height="150" rx="26" fill="#fff" opacity=".08"/>
+<rect x="540" y="335" width="235" height="315" rx="26" fill="#fff" opacity=".06"/>
+<rect x="800" y="335" width="235" height="315" rx="26" fill="#fff" opacity=".09"/>
+<rect x="590" y="195" width="260" height="28" rx="14" fill="#fff" opacity=".9"/>
+<rect x="590" y="245" width="180" height="10" rx="5" fill="#fff" opacity=".25"/>
+<circle cx="330" cy="405" r="105" fill="#fff" opacity=".1"/>
+<path d="M285 420l35 35 75-95" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="90" y="755" fill="#fff" font-family="Arial,sans-serif" font-size="34" font-weight="800">WebLab TdA</text>
+</svg>
