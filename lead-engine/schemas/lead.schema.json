@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Axante proposal lead",
+  "type": "object",
+  "required": [
+    "batch_id",
+    "lead_id",
+    "company_name",
+    "sector",
+    "city",
+    "website_url",
+    "contact_email",
+    "approved_for_contact",
+    "problems_detected",
+    "opportunities",
+    "personalization_evidence",
+    "template_id",
+    "preview_slug",
+    "preview_url",
+    "preview_status",
+    "qa_status",
+    "email_subject",
+    "email_body",
+    "send_status"
+  ],
+  "properties": {
+    "batch_id": { "type": "string" },
+    "lead_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "company_name": { "type": "string", "minLength": 2 },
+    "sector": { "type": "string" },
+    "city": { "type": "string" },
+    "website_url": { "type": "string", "format": "uri" },
+    "contact_email": { "type": "string", "format": "email" },
+    "email_source": { "type": "string" },
+    "approved_for_contact": { "type": "boolean" },
+    "decision_maker": { "type": ["string", "null"] },
+    "site_summary": { "type": "string" },
+    "problems_detected": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string" }
+    },
+    "opportunities": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string" }
+    },
+    "personalization_evidence": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "type": "string" }
+    },
+    "template_id": { "type": "string" },
+    "preview_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "preview_url": { "type": "string", "format": "uri" },
+    "preview_status": {
+      "enum": ["DRAFT", "BUILDING", "LIVE", "ERROR"]
+    },
+    "qa_status": {
+      "enum": ["PENDING", "PASSED", "QA_FAILED"]
+    },
+    "email_subject": { "type": "string", "minLength": 5 },
+    "email_body": { "type": "string", "minLength": 80 },
+    "send_status": {
+      "enum": ["NOT_READY", "READY_TO_SEND", "SENT", "ERROR"]
+    },
+    "sent_at": { "type": ["string", "null"], "format": "date-time" },
+    "reply_status": {
+      "enum": ["NONE", "REPLIED", "HOT", "CLOSED", "REJECTED"]
+    },
+    "lead_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}
