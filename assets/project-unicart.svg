@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+<title id="title">Unicart Auctions</title><desc id="desc">Digital auction platform</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#090D1C"/><stop offset="1" stop-color="#242C61"/></linearGradient><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7C5CFF"/><stop offset="1" stop-color="#242C61"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#bg)"/>
+<circle cx="1060" cy="40" r="280" fill="#7C5CFF" opacity=".18"/><circle cx="80" cy="770" r="250" fill="#fff" opacity=".04"/>
+<rect x="100" y="90" width="1000" height="620" rx="34" fill="#111118" stroke="#ffffff" stroke-opacity=".15"/>
+<rect x="100" y="90" width="1000" height="76" rx="34" fill="#1A1A24"/>
+<rect x="150" y="115" width="150" height="26" rx="13" fill="#7C5CFF"/>
+<g fill="#fff" opacity=".16">
+<rect x="150" y="220" width="260" height="175" rx="24"/><rect x="470" y="220" width="260" height="175" rx="24"/><rect x="790" y="220" width="260" height="175" rx="24"/>
+<rect x="150" y="455" width="420" height="190" rx="24"/><rect x="630" y="455" width="420" height="190" rx="24"/>
+</g>
+<path d="M190 350c50-70 110-42 160-100" fill="none" stroke="#7C5CFF" stroke-width="12" stroke-linecap="round"/>
+<circle cx="920" cy="305" r="55" fill="#7C5CFF" opacity=".9"/><path d="M895 305h50M920 280v50" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+<text x="90" y="755" fill="#fff" font-family="Arial,sans-serif" font-size="34" font-weight="800">Unicart Auctions</text>
+</svg>
