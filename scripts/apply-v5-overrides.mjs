@@ -32,9 +32,9 @@ function walk(directory) {
     html = html.replace(/(<img[^>]+src="\/assets\/media\/axante-logo\.png"[^>]*?)\sheight="[^"]+"/g, '$1');
     html = html.replace(/(<img[^>]+src="\/assets\/media\/(?:casarossa|unicart|carabetta|weblab|tda)\.jpg"[^>]*)(>)/g, (match, start, end) => start.includes('decoding=') ? match : `${start} decoding="async"${end}`);
     html = html.replace('src="/assets/media/casarossa.jpg" width="1400" height="1000" loading="lazy"', 'src="/assets/media/casarossa.jpg" width="1400" height="1000" loading="eager" fetchpriority="high"');
-    html = html.replace('/portfolio-v5.css"', '/portfolio-v5.css?v=6.2"');
-    html = html.replace('/home-v5.css"', '/home-v5.css?v=6.2"');
-    html = html.replace('/home-v5.js"', '/home-v5.js?v=6.2"');
+    html = html.replace(/\/portfolio-v5\.css(?:\?v=[^"]+)?"/, '/portfolio-v5.css?v=6.2"');
+    html = html.replace(/\/home-v5\.css(?:\?v=[^"]+)?"/, '/home-v5.css?v=6.2"');
+    html = html.replace(/\/home-v5\.js(?:\?v=[^"]+)?"/, '/home-v5.js?v=6.2"');
 
     const isHome = fullPath === path.join(site, 'index.html');
     const isPortfolio = fullPath === path.join(site, 'portfolio', 'index.html');
@@ -57,4 +57,4 @@ function walk(directory) {
 }
 
 walk(site);
-console.log('Applied Axante v6.2 local assets, mobile performance fixes and cache-busting.');
+console.log('Applied Axante v6.2 local assets, native mobile portfolio scrolling and reliable cache-busting.');
