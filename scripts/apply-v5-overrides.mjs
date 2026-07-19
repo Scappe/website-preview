@@ -41,9 +41,12 @@ function walk(directory) {
       html = html.replace('class="page-hero"', 'class="page-hero" data-ghost="AXANTE"');
     }
 
+    if (!html.includes('/fixes-v6.css')) html = html.replace('</head>', '<link rel="stylesheet" href="/fixes-v6.css?v=6.0"></head>');
+    if (!html.includes('/fixes-v6.js')) html = html.replace('</body>', '<script src="/fixes-v6.js?v=6.0" defer></script></body>');
+
     fs.writeFileSync(fullPath, html);
   }
 }
 
 walk(site);
-console.log('Applied Axante v6 local assets, mobile safeguards and cache-busting.');
+console.log('Applied Axante v6 local assets, repairs, mobile effects and cache-busting.');
