@@ -26,8 +26,8 @@ const requiredHomeAssets = [
   '/assets/media/carabetta.jpg',
   '/home-v5.css?v=6.0',
   '/home-v5.js?v=6.0',
-  '/fixes-v6.css?v=6.0',
-  '/fixes-v6.js?v=6.0'
+  '/fixes-v6.css?v=6.1',
+  '/fixes-v6.js?v=6.1'
 ];
 
 for (const asset of requiredHomeAssets) {
@@ -52,4 +52,4 @@ for (const relative of requiredFiles) {
   if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
 }
 
-console.log('Published Axante v6 with local media, mobile safeguards and strict asset validation.');
+console.log('Published Axante v6.1 with local media, mobile safeguards and strict asset validation.');
