@@ -19,19 +19,37 @@ if (fs.existsSync(sharedAssets)) {
 }
 
 const home = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
-const officialLogo = 'https://www.axante.it/wp-content/uploads/2021/08/axante-logo.png';
-const realProjectImages = [
-  'https://www.axante.it/wp-content/uploads/2025/02/casarossa-screenshot.jpg',
-  'https://www.axante.it/wp-content/uploads/2021/08/unicart.jpg',
-  'https://www.axante.it/wp-content/uploads/2021/08/copertina-sito-carabetta.jpg'
+const requiredHomeAssets = [
+  '/assets/media/axante-logo.png',
+  '/assets/media/casarossa.jpg',
+  '/assets/media/unicart.jpg',
+  '/assets/media/carabetta.jpg',
+  '/home-v5.css?v=6.0',
+  '/home-v5.js?v=6.0',
+  '/fixes-v6.css?v=6.0',
+  '/fixes-v6.js?v=6.0'
 ];
 
-if (!home.includes(officialLogo)) throw new Error('The official Axante logo is missing from the homepage.');
-for (const image of realProjectImages) {
-  if (!home.includes(image)) throw new Error(`Missing real project image: ${image}`);
+for (const asset of requiredHomeAssets) {
+  if (!home.includes(asset)) throw new Error(`Homepage is missing required v6 asset: ${asset}`);
 }
 
-if (!fs.existsSync(path.join(output, 'home-v4.css'))) throw new Error('home-v4.css was not published.');
-if (!fs.existsSync(path.join(output, 'home-v4.js'))) throw new Error('home-v4.js was not published.');
+const requiredFiles = [
+  'home-v5.css',
+  'home-v5.js',
+  'portfolio-v5.css',
+  'fixes-v6.css',
+  'fixes-v6.js',
+  'assets/media/axante-logo.png',
+  'assets/media/casarossa.jpg',
+  'assets/media/unicart.jpg',
+  'assets/media/carabetta.jpg',
+  'assets/media/weblab.jpg',
+  'assets/media/tda.jpg'
+];
 
-console.log('Published Axante v4 with official logo and real WordPress imagery preserved.');
+for (const relative of requiredFiles) {
+  if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
+}
+
+console.log('Published Axante v6 with local media, mobile safeguards and strict asset validation.');
