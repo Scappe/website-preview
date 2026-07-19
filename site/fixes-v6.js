@@ -72,7 +72,7 @@
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => entry.target.classList.toggle('in-view', entry.isIntersecting));
-      }, { threshold: .2, rootMargin: '-6% 0px -8%' });
+      }, { threshold: .16, rootMargin: '-4% 0px -6%' });
       observed.forEach(element => observer.observe(element));
     } else {
       observed.forEach(element => element.classList.add('in-view'));
@@ -80,23 +80,26 @@
 
     if (coarsePointer || window.innerWidth <= 680) {
       let ticking = false;
+      const movingElements = [...document.querySelectorAll('[data-mobile-depth],.reel-card')]
+        .filter(element => !element.classList.contains('case-study') && !element.closest('.portfolio-page'));
+
       const updateMobileDepth = () => {
         ticking = false;
         const viewportCenter = window.innerHeight / 2;
-        document.querySelectorAll('[data-mobile-depth],.case-study,.reel-card').forEach(element => {
+        movingElements.forEach(element => {
           const rect = element.getBoundingClientRect();
           if (rect.bottom < -120 || rect.top > window.innerHeight + 120) return;
           const center = rect.top + rect.height / 2;
           const normalized = clamp((center - viewportCenter) / Math.max(window.innerHeight, 1), -1, 1);
           const distance = Math.abs(normalized);
-          element.style.setProperty('--mobile-y', `${normalized * -10}px`);
-          element.style.setProperty('--mobile-rotate', `${normalized * 0.7}deg`);
-          element.style.setProperty('--mobile-scale', `${1 - distance * 0.018}`);
+          element.style.setProperty('--mobile-y', `${normalized * -8}px`);
+          element.style.setProperty('--mobile-rotate', `${normalized * 0.45}deg`);
+          element.style.setProperty('--mobile-scale', `${1 - distance * 0.012}`);
         });
       };
 
       const requestDepthUpdate = () => {
-        if (ticking) return;
+        if (ticking || !movingElements.length) return;
         ticking = true;
         requestAnimationFrame(updateMobileDepth);
       };
