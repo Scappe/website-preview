@@ -1,0 +1,204 @@
+{
+  "ok": true,
+  "base": "https://website-preview-murex.vercel.app",
+  "checked_at": "2026-07-19T19:25:27Z",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 16377,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/servizi/",
+      "status": 200,
+      "bytes": 8918,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/portfolio/",
+      "status": 200,
+      "bytes": 6761,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/chi-siamo/",
+      "status": 200,
+      "bytes": 7357,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/contatti/",
+      "status": 200,
+      "bytes": 6436,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/siti-web/",
+      "status": 200,
+      "bytes": 6677,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/marketing/",
+      "status": 200,
+      "bytes": 6676,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/branding/",
+      "status": 200,
+      "bytes": 5952,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/sviluppo/",
+      "status": 200,
+      "bytes": 6932,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/lavora-con-noi/",
+      "status": 200,
+      "bytes": 5572,
+      "content_type": "text/html; charset=utf-8",
+      "checks": {
+        "html": true,
+        "css-linked": true,
+        "local-logo": true,
+        "no-bundle-error": true,
+        "not-old-page": true
+      }
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "bytes": 1227,
+      "content_type": "application/xml",
+      "checks": {
+        "sitemap-valid": true
+      }
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "bytes": 66,
+      "content_type": "text/plain; charset=utf-8",
+      "checks": {
+        "robots-valid": true
+      }
+    },
+    {
+      "path": "/styles.css",
+      "status": 200,
+      "bytes": 23252,
+      "content_type": "text/css; charset=utf-8",
+      "checks": {}
+    },
+    {
+      "path": "/script.js",
+      "status": 200,
+      "bytes": 4953,
+      "content_type": "application/javascript; charset=utf-8",
+      "checks": {}
+    },
+    {
+      "path": "/assets/axante-logo.svg",
+      "status": 200,
+      "bytes": 911,
+      "content_type": "image/svg+xml",
+      "checks": {}
+    },
+    {
+      "path": "/assets/project-carabetta.svg",
+      "status": 200,
+      "bytes": 1510,
+      "content_type": "image/svg+xml",
+      "checks": {}
+    },
+    {
+      "path": "/assets/project-unicart.svg",
+      "status": 200,
+      "bytes": 1615,
+      "content_type": "image/svg+xml",
+      "checks": {}
+    },
+    {
+      "path": "/assets/project-weblab.svg",
+      "status": 200,
+      "bytes": 1543,
+      "content_type": "image/svg+xml",
+      "checks": {}
+    },
+    {
+      "path": "/assets/project-tda.svg",
+      "status": 200,
+      "bytes": 1501,
+      "content_type": "image/svg+xml",
+      "checks": {}
+    }
+  ]
+}
