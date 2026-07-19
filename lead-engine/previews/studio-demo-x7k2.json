@@ -1,0 +1,41 @@
+{
+  "slug": "studio-demo-x7k2",
+  "company_name": "Studio Demo",
+  "sector": "Servizi professionali",
+  "city": "Roma",
+  "headline": "Più chiarezza. Più fiducia. Più richieste.",
+  "subheadline": "Una proposta digitale costruita per spiegare subito il valore dello studio, rendere i servizi semplici da comprendere e accompagnare il visitatore verso un contatto reale.",
+  "visual_statement": "Competenza che si percepisce al primo sguardo.",
+  "visual_copy": "Un sistema visivo più autorevole, contenuti ordinati e un percorso di contatto senza attriti.",
+  "priority": "Trasformare visite in contatti",
+  "problems": [
+    "Il valore dei servizi non emerge con sufficiente immediatezza.",
+    "Il percorso mobile richiede troppi passaggi prima del contatto.",
+    "Mancano prove e contenuti che rafforzino fiducia e differenziazione."
+  ],
+  "opportunities": [
+    "Riorganizzare l'offerta intorno ai bisogni reali dei clienti.",
+    "Creare una gerarchia visiva più autorevole e riconoscibile.",
+    "Inserire CTA, prove sociali e tracciamento delle richieste."
+  ],
+  "concept_title": "Un sito che non si limita a presentare lo studio: lo rende la scelta più semplice.",
+  "concept_copy": "La nuova esperienza combina messaggi più diretti, un'identità visiva contemporanea e una struttura progettata per portare ogni pubblico verso l'informazione e l'azione più rilevante.",
+  "services": [
+    {
+      "title": "Strategia e contenuti",
+      "copy": "Posizionamento, architettura e testi costruiti intorno alle domande dei clienti."
+    },
+    {
+      "title": "Design e sviluppo",
+      "copy": "Un'interfaccia distintiva, veloce e realmente ottimizzata per smartphone."
+    },
+    {
+      "title": "Conversione e misura",
+      "copy": "CTA, tracciamenti e miglioramenti basati su ciò che produce richieste concrete."
+    }
+  ],
+  "theme": {
+    "accent": "#7347e8",
+    "accent2": "#ea5d8f"
+  }
+}
