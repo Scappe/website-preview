@@ -8,6 +8,8 @@ on:
       - "scripts/**"
       - ".github/workflows/visual-qa-cross-device.yml"
       - "package.json"
+      - "foundation-mobile-hotfix.css"
+      - "site/home-v5.js"
       - "servizi.html"
       - "servizi-premium.css"
       - "servizi-premium.js"
@@ -60,19 +62,43 @@ jobs:
           exit 1
 
       - name: Run homepage visual QA
+        id: home_qa
+        continue-on-error: true
         run: node scripts/visual-qa.mjs
 
       - name: Run services visual QA
+        id: services_qa
+        continue-on-error: true
         run: node scripts/visual-qa-services.mjs
 
       - name: Run portfolio visual QA
+        id: portfolio_qa
+        continue-on-error: true
         run: node scripts/visual-qa-portfolio.mjs
 
       - name: Run contact intake visual QA
+        id: contact_qa
+        continue-on-error: true
         run: node scripts/visual-qa-contact.mjs
 
       - name: Run studio operating visual QA
+        id: about_qa
+        continue-on-error: true
         run: node scripts/visual-qa-about.mjs
+
+      - name: Enforce visual QA result
+        if: always()
+        run: |
+          echo "home=${{ steps.home_qa.outcome }}"
+          echo "services=${{ steps.services_qa.outcome }}"
+          echo "portfolio=${{ steps.portfolio_qa.outcome }}"
+          echo "contact=${{ steps.contact_qa.outcome }}"
+          echo "about=${{ steps.about_qa.outcome }}"
+          test "${{ steps.home_qa.outcome }}" = "success"
+          test "${{ steps.services_qa.outcome }}" = "success"
+          test "${{ steps.portfolio_qa.outcome }}" = "success"
+          test "${{ steps.contact_qa.outcome }}" = "success"
+          test "${{ steps.about_qa.outcome }}" = "success"
 
       - name: Upload visual QA artifacts
         if: always()
