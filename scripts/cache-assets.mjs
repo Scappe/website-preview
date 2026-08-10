@@ -14,31 +14,41 @@ const assets = [
   ['tda.jpg', 'https://www.axante.it/wp-content/uploads/2021/08/tda.jpg']
 ];
 
-for (const [filename, url] of assets) {
+const fallbackBase = 'https://website-preview-murex.vercel.app/assets/media';
+
+async function fetchImage(url) {
   const response = await fetch(url, {
     redirect: 'follow',
     signal: AbortSignal.timeout(30000),
     headers: {
-      'user-agent': 'Mozilla/5.0 (compatible; AxantePreviewBuild/6.0)',
+      'user-agent': 'Mozilla/5.0 (compatible; AxantePreviewBuild/6.7)',
       accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       referer: 'https://www.axante.it/'
     }
   });
-
-  if (!response.ok) {
-    throw new Error(`Unable to download ${url}: HTTP ${response.status}`);
-  }
-
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const contentType = response.headers.get('content-type') || '';
-  if (!contentType.startsWith('image/')) {
-    throw new Error(`Invalid content type for ${url}: ${contentType || 'unknown'}`);
-  }
-
+  if (!contentType.startsWith('image/')) throw new Error(`invalid content type ${contentType || 'unknown'}`);
   const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length < 500) {
-    throw new Error(`Downloaded asset is unexpectedly small: ${filename} (${bytes.length} bytes)`);
-  }
+  if (bytes.length < 500) throw new Error(`unexpectedly small payload (${bytes.length} bytes)`);
+  return bytes;
+}
 
+for (const [filename, originUrl] of assets) {
+  const candidates = [originUrl, `${fallbackBase}/${filename}`];
+  let bytes = null;
+  let lastError = null;
+  for (const candidate of candidates) {
+    try {
+      bytes = await fetchImage(candidate);
+      if (candidate !== originUrl) console.warn(`Using published fallback for ${filename}`);
+      break;
+    } catch (error) {
+      lastError = error;
+      console.warn(`Asset source failed for ${filename}: ${candidate} (${error.message})`);
+    }
+  }
+  if (!bytes) throw new Error(`Unable to cache ${filename}: ${lastError?.message || 'all sources failed'}`);
   fs.writeFileSync(path.join(output, filename), bytes);
   console.log(`Cached ${filename}: ${bytes.length} bytes`);
 }
