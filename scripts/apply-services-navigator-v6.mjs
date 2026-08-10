@@ -6,6 +6,7 @@ const site = path.join(root, 'site');
 const sourceHtml = path.join(root, 'servizi.html');
 const sourceCss = path.join(root, 'servizi-premium.css');
 const sourceJs = path.join(root, 'servizi-premium.js');
+const socialImageUrl = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
 
 for (const file of [sourceHtml, sourceCss, sourceJs]) {
   if (!fs.existsSync(file)) throw new Error(`Missing services navigator source: ${path.basename(file)}`);
@@ -27,6 +28,9 @@ const replacements = [
 ];
 for (const [from, to] of replacements) html = html.split(from).join(to);
 
+const socialMeta = `<meta property="og:image" content="${socialImageUrl}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${socialImageUrl}">`;
+if (!html.includes('property="og:image"')) html = html.replace('</head>', `${socialMeta}</head>`);
+
 const serviceDir = path.join(site, 'servizi');
 fs.mkdirSync(serviceDir, { recursive: true });
 fs.writeFileSync(path.join(serviceDir, 'index.html'), html);
@@ -40,7 +44,9 @@ const checks = [
   'Devo vendere di più',
   'Devo lavorare meglio',
   '/servizi-premium.css?v=6.9',
-  '/servizi-premium.js?v=6.9'
+  '/servizi-premium.js?v=6.9',
+  socialImageUrl,
+  'summary_large_image'
 ];
 for (const check of checks) {
   if (!html.includes(check)) throw new Error(`Services navigator missing required content: ${check}`);
