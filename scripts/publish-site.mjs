@@ -6,6 +6,7 @@ const source = path.join(root, 'site');
 const sharedAssets = path.join(root, 'assets');
 const output = path.join(root, 'dist');
 const socialImageUrl = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
+const canonicalLogo = '/assets/media/axante-logo.png';
 
 if (!fs.existsSync(path.join(source, 'index.html'))) {
   throw new Error('site/index.html is missing.');
@@ -22,7 +23,7 @@ if (fs.existsSync(sharedAssets)) {
 const home = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
 const portfolio = fs.readFileSync(path.join(output, 'portfolio', 'index.html'), 'utf8');
 const requiredHomeAssets = [
-  '/assets/media/axante-logo.png',
+  canonicalLogo,
   '/assets/media/casarossa.jpg',
   '/assets/media/unicart.jpg',
   '/assets/media/carabetta.jpg',
@@ -34,11 +35,12 @@ const requiredHomeAssets = [
   '/apple-design.js?v=1.0',
   socialImageUrl,
   '<meta property="og:image:width" content="1200">',
-  '<meta property="og:image:height" content="630">'
+  '<meta property="og:image:height" content="630">',
+  'data-global-component-version="13.0"'
 ];
 
 for (const asset of requiredHomeAssets) {
-  if (!home.includes(asset)) throw new Error(`Homepage is missing required v6.4 asset or metadata: ${asset}`);
+  if (!home.includes(asset)) throw new Error(`Homepage is missing required foundation/current asset or metadata: ${asset}`);
 }
 
 if (!portfolio.includes('/portfolio-mobile-performance.css?v=6.3')) {
@@ -50,6 +52,9 @@ if (!portfolio.includes('/apple-design.css?v=1.0') || !portfolio.includes('/appl
 if (!portfolio.includes(socialImageUrl)) {
   throw new Error('Portfolio is missing the branded Axante social preview.');
 }
+if (!portfolio.includes(canonicalLogo) || !portfolio.includes('data-global-component-version="13.0"')) {
+  throw new Error('Portfolio is missing canonical foundation globals.');
+}
 
 const requiredFiles = [
   'home-v5.css',
@@ -60,6 +65,7 @@ const requiredFiles = [
   'fixes-v6.js',
   'apple-design.css',
   'apple-design.js',
+  'assets/asset-manifest.json',
   'assets/media/axante-logo.png',
   'assets/media/axante-share-v1.png',
   'assets/media/casarossa.jpg',
@@ -73,4 +79,9 @@ for (const relative of requiredFiles) {
   if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
 }
 
-console.log('Published Axante v6.4 with Apple-inspired fluid interactions and strict validation.');
+const manifest = JSON.parse(fs.readFileSync(path.join(output, 'assets', 'asset-manifest.json'), 'utf8'));
+if (manifest.version !== '13.0' || manifest.canonicalLogo !== canonicalLogo || !Array.isArray(manifest.assets)) {
+  throw new Error('Asset manifest is missing foundation v13 metadata.');
+}
+
+console.log(`Published Axante foundation v13.0 with ${manifest.assets.length} catalogued assets and canonical global components.`);
