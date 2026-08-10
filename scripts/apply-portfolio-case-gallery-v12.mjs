@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const site = path.join(root, 'site');
-const pagePath = path.join(site, 'portfolio.html');
+const pagePath = path.join(site, 'portfolio', 'index.html');
 const cssSource = path.join(root, 'portfolio-case-gallery.css');
 const jsSource = path.join(root, 'portfolio-case-gallery.js');
 
