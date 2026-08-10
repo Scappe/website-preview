@@ -61,15 +61,17 @@ for (const [width,height] of viewports) {
 
   if (width > 700) {
     const tabs = page.locator('[data-proof-tab]');
-    for (const index of [1,2,0,2,1]) await tabs.nth(index).click({ force:true });
+    // Required stress contract: 1 → 2 → 3 → 1 → 3 → 2.
+    for (const index of [0,1,2,0,2,1]) await tabs.nth(index).click({ force:true });
     await page.waitForTimeout(750);
     const state = await page.evaluate(() => ({
       selected:[...document.querySelectorAll('[data-proof-tab]')].findIndex(x=>x.getAttribute('aria-selected')==='true'),
       active:[...document.querySelectorAll('[data-proof-panel]')].findIndex(x=>x.classList.contains('is-active')),
-      visible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>!x.hidden).length,
+      visible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>!x.hidden && getComputedStyle(x).display!=='none').length,
+      ariaVisible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>x.getAttribute('aria-hidden')==='false').length,
       running:[...document.querySelectorAll('[data-proof-panel]')].reduce((n,x)=>n+x.getAnimations({subtree:true}).filter(a=>a.playState==='running').length,0)
     }));
-    if (state.selected!==1 || state.active!==1 || state.visible!==1 || state.running!==0) failures.push(`${width}x${height}: rapid interaction not deterministic ${JSON.stringify(state)}`);
+    if (state.selected!==1 || state.active!==1 || state.visible!==1 || state.ariaVisible!==1 || state.running!==0) failures.push(`${width}x${height}: rapid interaction not deterministic ${JSON.stringify(state)}`);
     await tabs.nth(1).focus(); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(700);
     if (await tabs.nth(2).getAttribute('aria-selected') !== 'true') failures.push(`${width}x${height}: keyboard interaction failed`);
   }
@@ -93,4 +95,4 @@ for (const [width,height] of [[390,844],[1366,768]]) {
 }
 await browser.close();
 if (failures.length) { console.error('SERVICES VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
-console.log(`SERVICES VISUAL QA PASSED: ${viewports.length} breakpoints, proof assets, collision checks, interactions and reduced-motion.`);
+console.log(`SERVICES VISUAL QA PASSED: ${viewports.length} breakpoints, proof assets, collision checks, required rapid sequence, interactions and reduced-motion.`);
