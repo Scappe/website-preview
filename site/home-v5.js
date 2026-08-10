@@ -8,8 +8,8 @@
 
   const header = document.querySelector('.site-header');
   const progress = document.querySelector('.scroll-progress');
-  const menuButton = document.querySelector('.menu-button');
-  const nav = document.querySelector('.main-nav');
+  const menuButton = document.querySelector('.menu-toggle, .menu-button');
+  const nav = document.querySelector('.nav, .main-nav');
 
   const updateScrollUI = () => {
     const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
@@ -120,204 +120,91 @@
       });
     });
 
-    const heroArt = document.querySelector('.hero-art');
-    if (heroArt) {
-      heroArt.addEventListener('pointermove', event => {
-        const rect = heroArt.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - .5;
-        const y = (event.clientY - rect.top) / rect.height - .5;
-        heroArt.querySelectorAll('[data-depth]').forEach(layer => {
-          const depth = Number(layer.dataset.depth || 1);
-          layer.style.translate = `${x * depth * 18}px ${y * depth * 14}px`;
-        });
-      });
-      heroArt.addEventListener('pointerleave', () => {
-        heroArt.querySelectorAll('[data-depth]').forEach(layer => { layer.style.translate = ''; });
-      });
-    }
+    document.querySelectorAll('[data-depth]').forEach(element => {
+      const depth = Number(element.dataset.depth || 1);
+      window.addEventListener('pointermove', event => {
+        const x = (event.clientX / window.innerWidth - .5) * depth * 10;
+        const y = (event.clientY / window.innerHeight - .5) * depth * 8;
+        element.style.translate = `${x}px ${y}px`;
+      }, { passive: true });
+    });
   }
 
-  const capabilityStage = document.querySelector('[data-capability-stage]');
-  if (capabilityStage) {
-    const nodes = [...capabilityStage.querySelectorAll('.capability-node')];
-    const indexNode = document.querySelector('[data-capability-index]');
-    const titleNode = document.querySelector('[data-capability-title]');
-    const copyNode = document.querySelector('[data-capability-copy]');
-    const linkNode = document.querySelector('[data-capability-link]');
-    const coreTitle = capabilityStage.querySelector('[data-core-title]');
-    const coreCopy = capabilityStage.querySelector('[data-core-copy]');
+  const stage = document.querySelector('[data-capability-stage]');
+  if (stage) {
+    const nodes = [...stage.querySelectorAll('.capability-node')];
+    const title = document.querySelector('[data-capability-title]');
+    const copy = document.querySelector('[data-capability-copy]');
+    const link = document.querySelector('[data-capability-link]');
+    const index = document.querySelector('[data-capability-index]');
+    const coreTitle = document.querySelector('[data-core-title]');
+    const coreCopy = document.querySelector('[data-core-copy]');
 
-    const activate = node => {
+    const setActive = node => {
       nodes.forEach(item => item.classList.toggle('active', item === node));
-      const index = node.dataset.index || '01';
-      const title = node.dataset.title || '';
-      const copy = node.dataset.copy || '';
-      const href = node.dataset.href || '/servizi';
-      if (indexNode) indexNode.textContent = index;
-      if (titleNode) titleNode.textContent = title;
-      if (copyNode) copyNode.textContent = copy;
-      if (linkNode) linkNode.href = href;
-      if (coreTitle) coreTitle.textContent = title;
-      if (coreCopy) coreCopy.textContent = node.dataset.short || copy;
+      if (title) title.textContent = node.dataset.title || '';
+      if (copy) copy.textContent = node.dataset.copy || '';
+      if (link) link.href = node.dataset.href || '#';
+      if (index) index.textContent = node.dataset.index || '';
+      if (coreTitle) coreTitle.textContent = node.dataset.title || '';
+      if (coreCopy) coreCopy.textContent = node.dataset.short || '';
     };
 
     nodes.forEach(node => {
-      node.addEventListener('pointerenter', () => activate(node));
-      node.addEventListener('focus', () => activate(node));
+      node.addEventListener('pointerenter', () => setActive(node));
+      node.addEventListener('focus', () => setActive(node));
       node.addEventListener('click', event => {
-        if (!node.classList.contains('active')) {
+        if (coarsePointer && !node.classList.contains('active')) {
           event.preventDefault();
-          activate(node);
+          setActive(node);
         }
       });
     });
-    if (nodes[0]) activate(nodes[0]);
   }
 
-  const horizontalSections = [...document.querySelectorAll('[data-horizontal]')];
-  const horizontalData = new Map();
-
-  const measureHorizontal = () => {
-    horizontalSections.forEach(section => {
-      const track = section.querySelector('.project-track');
-      if (!track || window.innerWidth <= 1080 || reduceMotion) {
-        section.style.height = '';
-        if (track) track.style.transform = '';
-        horizontalData.delete(section);
-        return;
-      }
-      const maxX = Math.max(track.scrollWidth - window.innerWidth, 0);
-      const extra = Math.max(maxX, window.innerHeight * 1.2);
-      section.style.height = `${window.innerHeight + extra}px`;
-      horizontalData.set(section, { track, maxX });
-    });
-  };
-
-  const updateHorizontal = () => {
-    horizontalData.forEach(({ track, maxX }, section) => {
-      const rect = section.getBoundingClientRect();
-      const scrollable = Math.max(section.offsetHeight - window.innerHeight, 1);
-      const localProgress = clamp(-rect.top / scrollable);
-      track.style.transform = `translate3d(${-maxX * localProgress}px,0,0)`;
-      const counter = section.querySelector('[data-reel-counter]');
-      if (counter) {
-        const total = track.children.length;
-        const active = Math.min(Math.floor(localProgress * total) + 1, total);
-        counter.textContent = `${String(active).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
-      }
-    });
-  };
-
-  measureHorizontal();
-  updateHorizontal();
-  window.addEventListener('resize', () => {
-    measureHorizontal();
-    updateHorizontal();
-  });
-  window.addEventListener('scroll', updateHorizontal, { passive: true });
-
-  const process = document.querySelector('.process-line');
-  if (process && !reduceMotion) {
-    const updateProcess = () => {
-      const rect = process.getBoundingClientRect();
-      const ratio = clamp((window.innerHeight * .78 - rect.top) / Math.max(rect.height, 1));
-      process.style.setProperty('--process', ratio.toFixed(3));
+  const horizontal = document.querySelector('[data-horizontal]');
+  if (horizontal && !reduceMotion && window.matchMedia('(min-width: 861px)').matches) {
+    const sticky = horizontal.querySelector('.sticky-projects');
+    const track = horizontal.querySelector('.project-track');
+    const cards = [...horizontal.querySelectorAll('.reel-card')];
+    const counter = horizontal.querySelector('[data-reel-counter]');
+    let raf = 0;
+    const updateReel = () => {
+      raf = 0;
+      const rect = horizontal.getBoundingClientRect();
+      const progressValue = clamp(-rect.top / Math.max(horizontal.offsetHeight - window.innerHeight, 1));
+      const maxShift = Math.max(track.scrollWidth - window.innerWidth + 140, 0);
+      track.style.transform = `translate3d(${-progressValue * maxShift}px,0,0)`;
+      const activeIndex = Math.min(cards.length - 1, Math.floor(progressValue * cards.length));
+      cards.forEach((card, i) => card.classList.toggle('active', i === activeIndex));
+      if (counter) counter.textContent = `${String(activeIndex + 1).padStart(2,'0')} / ${String(cards.length).padStart(2,'0')}`;
     };
-    updateProcess();
-    window.addEventListener('scroll', updateProcess, { passive: true });
-  }
-
-  const canvas = document.querySelector('.ambient-canvas');
-  if (canvas && !reduceMotion) {
-    const context = canvas.getContext('2d', { alpha: true });
-    let width = 0;
-    let height = 0;
-    let dpr = 1;
-    let mouseX = -1000;
-    let mouseY = -1000;
-    let particles = [];
-
-    const resizeCanvas = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = coarsePointer ? 26 : Math.min(62, Math.floor(width / 24));
-      particles = Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - .5) * .18,
-        vy: (Math.random() - .5) * .18,
-        radius: Math.random() * 1.3 + .35
-      }));
-    };
-
-    window.addEventListener('pointermove', event => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
+    window.addEventListener('scroll', () => {
+      if (!raf) raf = requestAnimationFrame(updateReel);
     }, { passive: true });
-    window.addEventListener('pointerleave', () => {
-      mouseX = -1000;
-      mouseY = -1000;
-    });
-
-    const draw = () => {
-      context.clearRect(0, 0, width, height);
-      particles.forEach((particle, index) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        if (particle.x < -20) particle.x = width + 20;
-        if (particle.x > width + 20) particle.x = -20;
-        if (particle.y < -20) particle.y = height + 20;
-        if (particle.y > height + 20) particle.y = -20;
-
-        const dx = particle.x - mouseX;
-        const dy = particle.y - mouseY;
-        const distance = Math.hypot(dx, dy);
-        if (distance < 150 && distance > 0) {
-          particle.x += (dx / distance) * (150 - distance) * .018;
-          particle.y += (dy / distance) * (150 - distance) * .018;
-        }
-
-        context.beginPath();
-        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        context.fillStyle = index % 3 === 0 ? 'rgba(255,90,174,.42)' : 'rgba(255,255,255,.25)';
-        context.fill();
-
-        for (let otherIndex = index + 1; otherIndex < particles.length; otherIndex += 1) {
-          const other = particles[otherIndex];
-          const linkDistance = Math.hypot(particle.x - other.x, particle.y - other.y);
-          if (linkDistance > 115) continue;
-          context.beginPath();
-          context.moveTo(particle.x, particle.y);
-          context.lineTo(other.x, other.y);
-          context.strokeStyle = `rgba(255,255,255,${(1 - linkDistance / 115) * .07})`;
-          context.stroke();
-        }
-      });
-      requestAnimationFrame(draw);
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    draw();
+    window.addEventListener('resize', updateReel, { passive: true });
+    updateReel();
+    if (sticky) sticky.style.willChange = 'transform';
   }
 
-  document.querySelectorAll('a[href]').forEach(link => {
-    link.addEventListener('click', event => {
-      if (reduceMotion || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const href = link.getAttribute('href');
-      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || link.target === '_blank') return;
-      const target = new URL(link.href, window.location.href);
-      if (target.origin !== window.location.origin) return;
-      if (target.pathname === window.location.pathname && target.hash) return;
-      event.preventDefault();
-      document.body.classList.add('is-leaving');
-      window.setTimeout(() => { window.location.href = target.href; }, 430);
-    });
+  document.querySelectorAll('[data-mobile-depth]').forEach((card, index) => {
+    if (!coarsePointer || reduceMotion) return;
+    card.style.setProperty('--mobile-depth', String(index));
   });
+
+  const pageTransition = document.querySelector('.page-transition');
+  if (pageTransition && !reduceMotion) {
+    document.querySelectorAll('a[href]').forEach(link => {
+      const url = link.getAttribute('href') || '';
+      if (!url.startsWith('/') || url.startsWith('//')) return;
+      link.addEventListener('click', event => {
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const target = new URL(link.href, location.href);
+        if (target.pathname === location.pathname && target.hash) return;
+        event.preventDefault();
+        pageTransition.classList.add('active');
+        window.setTimeout(() => { location.href = link.href; }, 280);
+      });
+    });
+  }
 })();
