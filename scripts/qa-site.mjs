@@ -7,9 +7,10 @@ const failures = [];
 const socialImage = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
 const canonicalLogo = '/assets/media/axante-logo.png';
 const foundationMarker = 'data-global-component-version="13.1"';
-const serviceProofAssets = ['casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta-category.jpg','carabetta-new.jpg'];
+const serviceCachedAssets = ['casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta-category.jpg','carabetta-new.jpg'];
+const serviceDisplayAssets = ['casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta.jpg','carabetta-logo.png'];
 const requiredFiles = [
-  'index.html','home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','styles.css','script.js','enhance-v5.css','enhance-v5.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','sitemap.xml','robots.txt','404.html','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-detail.jpg','assets/media/unicart.jpg','assets/media/unicart-detail.jpg','assets/media/carabetta.jpg','assets/media/carabetta-detail.jpg','assets/media/carabetta-logo.png','assets/media/weblab.jpg','assets/media/tda.jpg',...serviceProofAssets.map(name=>`assets/media/${name}`)
+  'index.html','home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','styles.css','script.js','enhance-v5.css','enhance-v5.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','sitemap.xml','robots.txt','404.html','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-detail.jpg','assets/media/unicart.jpg','assets/media/unicart-detail.jpg','assets/media/carabetta.jpg','assets/media/carabetta-detail.jpg','assets/media/carabetta-logo.png','assets/media/weblab.jpg','assets/media/tda.jpg',...serviceCachedAssets.map(name=>`assets/media/${name}`)
 ];
 for (const relative of requiredFiles) if (!fs.existsSync(path.join(root, relative))) failures.push(`Missing required file: ${relative}`);
 
@@ -87,7 +88,7 @@ if (!homeHtml.includes('/home-reactor.css?v=15.0') || !homeHtml.includes('/home-
 const servicesHtml = fs.existsSync(path.join(root,'servizi','index.html')) ? fs.readFileSync(path.join(root,'servizi','index.html'),'utf8') : '';
 if (!servicesHtml.includes('Service Proof Spine') || !servicesHtml.includes('data-service-proof')) failures.push('Services page missing Service Proof Spine v16');
 if (!servicesHtml.includes('/servizi-premium.css?v=16.0') || !servicesHtml.includes('/servizi-premium.js?v=16.0')) failures.push('Services page missing v16 assets');
-for (const name of serviceProofAssets) if (!servicesHtml.includes(`/assets/media/${name}`)) failures.push(`Services proof missing ${name}`);
+for (const name of serviceDisplayAssets) if (!servicesHtml.includes(`/assets/media/${name}`)) failures.push(`Services proof missing displayed asset ${name}`);
 if ((servicesHtml.match(/data-proof-panel/g)||[]).length !== 3) failures.push('Services page must contain exactly 3 proof panels');
 
 const reactorJs = fs.existsSync(path.join(root,'home-reactor.js')) ? fs.readFileSync(path.join(root,'home-reactor.js'),'utf8') : '';
@@ -119,7 +120,7 @@ if (fs.existsSync(manifestPath)) {
     if (manifest.canonicalLogo !== canonicalLogo) failures.push('asset-manifest.json: canonicalLogo mismatch');
     if (!Array.isArray(manifest.assets) || manifest.assets.length < 16) failures.push('asset-manifest.json: asset catalog unexpectedly small');
     for (const asset of manifest.assets || []) if (!asset.path || !asset.category || typeof asset.bytes !== 'number') failures.push('asset-manifest.json: invalid asset record');
-    for (const name of ['casarossa-detail.jpg','unicart-detail.jpg','carabetta-detail.jpg',...serviceProofAssets]) if (!(manifest.assets||[]).some(asset=>asset.path.endsWith(`/${name}`)&&asset.category==='portfolio')) failures.push(`asset-manifest.json: missing portfolio record for ${name}`);
+    for (const name of ['casarossa-detail.jpg','unicart-detail.jpg','carabetta-detail.jpg',...serviceCachedAssets]) if (!(manifest.assets||[]).some(asset=>asset.path.endsWith(`/${name}`)&&asset.category==='portfolio')) failures.push(`asset-manifest.json: missing portfolio record for ${name}`);
   } catch(error) { failures.push(`Unable to parse asset-manifest.json: ${error.message}`); }
 }
 
