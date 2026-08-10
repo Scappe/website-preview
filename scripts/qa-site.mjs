@@ -26,8 +26,11 @@ const requiredFiles = [
   'assets/media/axante-logo.png',
   'assets/media/axante-share-v1.png',
   'assets/media/casarossa.jpg',
+  'assets/media/casarossa-detail.jpg',
   'assets/media/unicart.jpg',
+  'assets/media/unicart-detail.jpg',
   'assets/media/carabetta.jpg',
+  'assets/media/carabetta-detail.jpg',
   'assets/media/carabetta-logo.png',
   'assets/media/weblab.jpg',
   'assets/media/tda.jpg'
@@ -117,6 +120,24 @@ for (const file of htmlFiles) {
   }
 }
 
+const homeHtml = fs.existsSync(path.join(root, 'index.html')) ? fs.readFileSync(path.join(root, 'index.html'), 'utf8') : '';
+for (const [primary, detail] of [
+  ['casarossa.jpg', 'casarossa-detail.jpg'],
+  ['unicart.jpg', 'unicart-detail.jpg'],
+  ['carabetta.jpg', 'carabetta-detail.jpg']
+]) {
+  if (!homeHtml.includes(`/assets/media/${primary}`)) failures.push(`Reactor missing primary asset ${primary}`);
+  if (!homeHtml.includes(`/assets/media/${detail}`)) failures.push(`Reactor missing distinct detail asset ${detail}`);
+  if (primary === detail) failures.push(`Reactor primary/detail collision for ${primary}`);
+}
+if (homeHtml.includes('reactor-mobile-crop')) failures.push('Reactor legacy duplicated mobile crop survived build');
+if (!homeHtml.includes('/home-reactor.css?v=15.0') || !homeHtml.includes('/home-reactor.js?v=15.0')) failures.push('Homepage is missing Reactor v15 assets');
+
+const reactorJs = fs.existsSync(path.join(root, 'home-reactor.js')) ? fs.readFileSync(path.join(root, 'home-reactor.js'), 'utf8') : '';
+if (/setTimeout\s*\(/.test(reactorJs)) failures.push('home-reactor.js: timer-based transition logic survived');
+if (!reactorJs.includes('commitStyles') || !reactorJs.includes('cancelRunning')) failures.push('home-reactor.js: interruptible animation cancellation is missing');
+if (!reactorJs.includes("aria-selected") || !reactorJs.includes("aria-hidden")) failures.push('home-reactor.js: accessibility state synchronization missing');
+
 const css = fs.existsSync(path.join(root, 'home-v5.css')) ? fs.readFileSync(path.join(root, 'home-v5.css'), 'utf8') : '';
 if (!/overflow-x:(?:clip|hidden)/.test(css)) failures.push('home-v5.css: no root horizontal overflow safeguard');
 if (!/\.footer-brand img[^}]*height:auto/.test(css)) failures.push('home-v5.css: footer logo aspect ratio is not protected');
@@ -139,9 +160,12 @@ if (fs.existsSync(manifestPath)) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     if (manifest.version !== '13.0') failures.push(`asset-manifest.json: expected version 13.0, found ${manifest.version}`);
     if (manifest.canonicalLogo !== canonicalLogo) failures.push('asset-manifest.json: canonicalLogo mismatch');
-    if (!Array.isArray(manifest.assets) || manifest.assets.length < 7) failures.push('asset-manifest.json: asset catalog unexpectedly small');
+    if (!Array.isArray(manifest.assets) || manifest.assets.length < 10) failures.push('asset-manifest.json: asset catalog unexpectedly small');
     for (const asset of manifest.assets || []) {
       if (!asset.path || !asset.category || typeof asset.bytes !== 'number') failures.push('asset-manifest.json: invalid asset record');
+    }
+    for (const name of ['casarossa-detail.jpg','unicart-detail.jpg','carabetta-detail.jpg']) {
+      if (!(manifest.assets || []).some(asset => asset.path.endsWith(`/${name}`) && asset.category === 'portfolio')) failures.push(`asset-manifest.json: missing portfolio record for ${name}`);
     }
   } catch (error) {
     failures.push(`Unable to parse asset-manifest.json: ${error.message}`);
@@ -166,4 +190,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, canonical globals and ${principalRoutes.length} principal routes verified.`);
+console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, Reactor v15, canonical globals and ${principalRoutes.length} principal routes verified.`);
