@@ -15,6 +15,9 @@ on:
       - "contatti.html"
       - "contact-intake.css"
       - "contact-intake.js"
+      - "chi-siamo.html"
+      - "about-operating.css"
+      - "about-operating.js"
   workflow_dispatch:
 
 permissions:
@@ -67,6 +70,9 @@ jobs:
 
       - name: Run contact intake visual QA
         run: node scripts/visual-qa-contact.mjs
+
+      - name: Run studio operating visual QA
+        run: node scripts/visual-qa-about.mjs
 
       - name: Upload visual QA artifacts
         if: always()
