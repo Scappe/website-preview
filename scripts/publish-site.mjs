@@ -28,11 +28,11 @@ if (!portfolio.includes('/apple-design.css?v=1.0') || !portfolio.includes('/appl
 if (!portfolio.includes(socialImageUrl)) throw new Error('Portfolio is missing the branded Axante social preview.');
 if (!portfolio.includes(canonicalLogo) || !portfolio.includes(foundationMarker)) throw new Error('Portfolio is missing canonical foundation globals.');
 
-for (const token of ['/servizi-premium.css?v=16.0','/servizi-premium.js?v=16.0','Service Proof Spine','casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta-category.jpg','carabetta-new.jpg',foundationMarker]) {
+for (const token of ['/servizi-premium.css?v=16.0','/servizi-premium.js?v=16.0','Service Proof Spine','casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta.jpg','carabetta-logo.png',foundationMarker]) {
   if (!services.includes(token)) throw new Error(`Services proof spine missing published token: ${token}`);
 }
 
-const requiredFiles = ['home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','apple-design.css','apple-design.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-store.jpg','assets/media/casarossa-product.jpg','assets/media/unicart.jpg','assets/media/unicart-catalog.jpg','assets/media/unicart-auctions.jpg','assets/media/carabetta.jpg','assets/media/carabetta-category.jpg','assets/media/carabetta-new.jpg','assets/media/weblab.jpg','assets/media/tda.jpg'];
+const requiredFiles = ['home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','apple-design.css','apple-design.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-store.jpg','assets/media/casarossa-product.jpg','assets/media/unicart.jpg','assets/media/unicart-catalog.jpg','assets/media/unicart-auctions.jpg','assets/media/carabetta.jpg','assets/media/carabetta-logo.png','assets/media/carabetta-category.jpg','assets/media/carabetta-new.jpg','assets/media/weblab.jpg','assets/media/tda.jpg'];
 for (const relative of requiredFiles) if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(output, 'assets', 'asset-manifest.json'), 'utf8'));
