@@ -4,22 +4,13 @@ on:
   push:
     branches:
       - apple-design-fluid
-    paths:
-      - "scripts/**"
-      - ".github/workflows/visual-qa-cross-device.yml"
-      - "package.json"
-      - "foundation-mobile-hotfix.css"
-      - "site/home-v5.js"
-      - "servizi.html"
-      - "servizi-premium.css"
-      - "servizi-premium.js"
-      - "portfolio.html"
-      - "contatti.html"
-      - "contact-intake.css"
-      - "contact-intake.js"
-      - "chi-siamo.html"
-      - "about-operating.css"
-      - "about-operating.js"
+    # Intentionally broad: any non-documentation change can affect the rendered site
+    # through the cumulative build pipeline. This prevents visual files/components from
+    # silently falling outside QA when new CSS/JS/assets/generators are introduced.
+    paths-ignore:
+      - "**/*.md"
+      - "diagnostics/**"
+      - "qa-screenshots/**"
   workflow_dispatch:
 
 permissions:
