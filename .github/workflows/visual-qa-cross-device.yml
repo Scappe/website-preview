@@ -34,23 +34,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install project dependencies
         run: npm install
-
       - name: Build site
         run: npm run build
-
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-
       - name: Serve built site
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory dist >/tmp/axante-http.log 2>&1 &
@@ -63,42 +58,58 @@ jobs:
 
       - name: Run homepage visual QA
         id: home_qa
-        continue-on-error: true
-        run: node scripts/visual-qa.mjs
-
+        run: |
+          set +e
+          node scripts/visual-qa.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run services visual QA
         id: services_qa
-        continue-on-error: true
-        run: node scripts/visual-qa-services.mjs
-
+        run: |
+          set +e
+          node scripts/visual-qa-services.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run portfolio visual QA
         id: portfolio_qa
-        continue-on-error: true
-        run: node scripts/visual-qa-portfolio.mjs
-
+        run: |
+          set +e
+          node scripts/visual-qa-portfolio.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run contact intake visual QA
         id: contact_qa
-        continue-on-error: true
-        run: node scripts/visual-qa-contact.mjs
-
+        run: |
+          set +e
+          node scripts/visual-qa-contact.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Run studio operating visual QA
         id: about_qa
-        continue-on-error: true
-        run: node scripts/visual-qa-about.mjs
+        run: |
+          set +e
+          node scripts/visual-qa-about.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Enforce visual QA result
         if: always()
         run: |
-          echo "home=${{ steps.home_qa.outcome }}"
-          echo "services=${{ steps.services_qa.outcome }}"
-          echo "portfolio=${{ steps.portfolio_qa.outcome }}"
-          echo "contact=${{ steps.contact_qa.outcome }}"
-          echo "about=${{ steps.about_qa.outcome }}"
-          test "${{ steps.home_qa.outcome }}" = "success"
-          test "${{ steps.services_qa.outcome }}" = "success"
-          test "${{ steps.portfolio_qa.outcome }}" = "success"
-          test "${{ steps.contact_qa.outcome }}" = "success"
-          test "${{ steps.about_qa.outcome }}" = "success"
+          echo "home=${{ steps.home_qa.outputs.code }}"
+          echo "services=${{ steps.services_qa.outputs.code }}"
+          echo "portfolio=${{ steps.portfolio_qa.outputs.code }}"
+          echo "contact=${{ steps.contact_qa.outputs.code }}"
+          echo "about=${{ steps.about_qa.outputs.code }}"
+          test "${{ steps.home_qa.outputs.code }}" = "0"
+          test "${{ steps.services_qa.outputs.code }}" = "0"
+          test "${{ steps.portfolio_qa.outputs.code }}" = "0"
+          test "${{ steps.contact_qa.outputs.code }}" = "0"
+          test "${{ steps.about_qa.outputs.code }}" = "0"
 
       - name: Upload visual QA artifacts
         if: always()
