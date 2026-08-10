@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/**"
       - ".github/workflows/visual-qa-cross-device.yml"
+      - "package.json"
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      QA_BASE_URL: "https://website-preview-8szzcrkd2-scappes-projects.vercel.app/?_vercel_share=fmhO9hS9ERlltoIAkiUfG6KhRbf6EZr2"
+      QA_BASE_URL: "http://127.0.0.1:4173/"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,10 +28,26 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install project dependencies
+        run: npm install
+
+      - name: Build site
+        run: npm run build
+
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Serve built site
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist >/tmp/axante-http.log 2>&1 &
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/axante-http.log
+          exit 1
 
       - name: Run visual QA
         run: node scripts/visual-qa.mjs
