@@ -63,7 +63,6 @@ for (const file of htmlFiles) {
     html = html.replace(/<footer\b[^>]*class="[^"]*site-footer[^"]*"[\s\S]*?<\/footer>/i, footer());
   }
 
-  // No generated page may reference an alternative Axante logo after this pass.
   html = html
     .replace(/src="\/assets\/axante-logo\.svg"/g, `src="${CANONICAL_LOGO}"`)
     .replace(/src="https:\/\/www\.axante\.it\/wp-content\/uploads\/2021\/08\/axante-logo\.png"/g, `src="${CANONICAL_LOGO}"`);
@@ -77,8 +76,11 @@ for (const file of htmlFiles) {
 const origins = {
   'axante-logo.png': 'https://www.axante.it/wp-content/uploads/2021/08/axante-logo.png',
   'casarossa.jpg': 'https://www.axante.it/wp-content/uploads/2025/02/casarossa-screenshot.jpg',
+  'casarossa-detail.jpg': 'https://www.axante.it/wp-content/uploads/2025/02/casarossa-vaso.jpg',
   'unicart.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/unicart.jpg',
+  'unicart-detail.jpg': 'https://s.wordpress.com/mshots/v1/https%3A%2F%2Funicartauctions.com%2Fen%2F?w=1200',
   'carabetta.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/copertina-sito-carabetta.jpg',
+  'carabetta-detail.jpg': 'https://carabetta.eu/img/cms/biancheria-letto.jpg',
   'carabetta-logo.png': 'https://www.axante.it/wp-content/uploads/2021/08/carabetta-logo.png',
   'weblab.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/weblab.jpg',
   'tda.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/tda.jpg'
