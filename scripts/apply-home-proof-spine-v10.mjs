@@ -19,6 +19,7 @@ const sections = /<section\b[^>]*>[\s\S]*?<\/section>/g;
 let replacedProof = false;
 html = html.replace(sections, section => {
   if (section.includes('Competenze integrate')) return '';
+  if (section.includes('class="section capabilities"') || section.includes('capability-shell')) return '';
   if (section.includes('Bello da vedere.') && section.includes('12+')) return '';
   if (section.includes('case-studies-v3') || section.includes('Selected work · prove, non promesse') || (section.includes('Selected work') && section.includes('portfolio'))) {
     if (replacedProof) return '';
@@ -30,6 +31,10 @@ html = html.replace(sections, section => {
 
 if (!replacedProof) throw new Error('Selected Work / case-study section target not found for Proof Spine.');
 
+// Remove the legacy capability ticker and the orphaned pre-v9 bridge left after the hero transform.
+html = html.replace(/<div class="marquee"[\s\S]*?<\/div><\/div>/, '');
+html = html.replace(/\s*<\/div>\s*<div class="lp-bridge"[\s\S]*?<\/div>\s*<\/section>\s*(?=<div class="marquee"|<section class="proof-spine"|<section class="section process-section")/, '\n');
+
 if (!html.includes('/home-proof-spine.css?v=10.0')) html = html.replace('</head>', '<link rel="stylesheet" href="/home-proof-spine.css?v=10.0"></head>');
 if (!html.includes('/home-proof-spine.js?v=10.0')) html = html.replace('</body>', '<script src="/home-proof-spine.js?v=10.0" defer></script></body>');
 
@@ -39,6 +44,6 @@ fs.copyFileSync(jsSource, path.join(site, 'home-proof-spine.js'));
 
 const required = ['data-proof-spine','Tre problemi.','Casa Rossa','Unicart Auctions','Carabetta','Problema','Sistema Axante','Prova reale','/portfolio#casa-rossa','/portfolio#unicart','/portfolio#carabetta','/contatti','/home-proof-spine.css?v=10.0','/home-proof-spine.js?v=10.0'];
 for (const token of required) if (!html.includes(token)) throw new Error(`Proof Spine missing required token: ${token}`);
-for (const legacy of ['12+','competenze integrate','Bello da vedere.']) if (html.includes(legacy)) throw new Error(`Legacy generic middle-funnel token still present: ${legacy}`);
+for (const legacy of ['12+','competenze integrate','Bello da vedere.','capability-shell','Un universo operativo.','class="marquee"','class="lp-bridge"']) if (html.includes(legacy)) throw new Error(`Legacy generic middle-funnel token still present: ${legacy}`);
 
 console.log('Applied Axante Home Proof Spine v10.0.');
