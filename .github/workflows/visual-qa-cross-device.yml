@@ -12,6 +12,9 @@ on:
       - "servizi-premium.css"
       - "servizi-premium.js"
       - "portfolio.html"
+      - "contatti.html"
+      - "contact-intake.css"
+      - "contact-intake.js"
   workflow_dispatch:
 
 permissions:
@@ -61,6 +64,9 @@ jobs:
 
       - name: Run portfolio visual QA
         run: node scripts/visual-qa-portfolio.mjs
+
+      - name: Run contact intake visual QA
+        run: node scripts/visual-qa-contact.mjs
 
       - name: Upload visual QA artifacts
         if: always()
