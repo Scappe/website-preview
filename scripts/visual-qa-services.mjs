@@ -10,7 +10,7 @@ const url = new URL('servizi/', base).href;
 const viewports = [[320,760],[360,800],[390,844],[430,932],[768,1024],[1024,768],[1366,768],[1440,900]];
 const failures = [];
 const browser = await chromium.launch({ headless: true });
-const requiredAssets = ['casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta-category.jpg','carabetta-new.jpg'];
+const requiredAssets = ['casarossa-store.jpg','casarossa-product.jpg','unicart-catalog.jpg','unicart-auctions.jpg','carabetta.jpg','carabetta-logo.png'];
 
 for (const [width,height] of viewports) {
   const context = await browser.newContext({ viewport: { width, height } });
