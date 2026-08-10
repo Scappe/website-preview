@@ -6,6 +6,9 @@ const out = path.join(process.cwd(), 'qa-screenshots');
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 
+const baseURL = process.env.QA_BASE_URL;
+if (!baseURL) throw new Error('QA_BASE_URL is required.');
+
 const viewports = [
   [360,800], [390,844], [430,932], [768,1024], [1024,768], [1366,768], [1440,900]
 ];
@@ -21,14 +24,14 @@ for (const [width,height] of viewports) {
   page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
   page.on('pageerror', err => consoleErrors.push(err.message));
 
-  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+  await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(700);
 
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;
     const body = document.body;
-    const essential = [...document.querySelectorAll('h1,.button,.header-cta,.menu-button,.case-study,.capability-stage,.cta-panel')];
+    const essential = [...document.querySelectorAll('h1,.button,.header-cta,.menu-button,.case-chapter,.capability-stage,.cta-panel')];
     const clipped = essential.filter(el => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
@@ -69,12 +72,11 @@ for (const [width,height] of viewports) {
   await context.close();
 }
 
-// Reduced-motion verification at representative mobile + desktop widths.
 for (const [width,height] of [[390,844],[1366,768]]) {
   const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' });
   const page = await context.newPage();
-  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(250);
+  await page.goto(baseURL, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
   const visible = await page.evaluate(() => {
     const items = [...document.querySelectorAll('.reveal,.clip-reveal')];
     return items.every(el => {
