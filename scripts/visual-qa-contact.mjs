@@ -35,7 +35,8 @@ for (const [width,height] of viewports) {
     if (!metrics.hero.includes('Portaci il problema')) failures.push(`${width}x${height}: wrong hero`);
     if (errors.length) failures.push(`${width}x${height}: console/page errors ${errors.join(' | ')}`);
 
-    await page.locator('input[name="problem"]').first().check();
+    await page.locator('.problem-option').first().click();
+    if (!(await page.locator('input[name="problem"]').first().isChecked())) failures.push(`${width}x${height}: problem choice label did not select radio`);
     await page.locator('[data-intake-step="1"] [data-next-step]').click();
     const step2Visible = await page.locator('[data-intake-step="2"]').isVisible();
     if (!step2Visible) failures.push(`${width}x${height}: step 1→2 failed`);
