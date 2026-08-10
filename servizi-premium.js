@@ -30,6 +30,9 @@
       panel.classList.toggle('is-active', on);
       panel.toggleAttribute('hidden', !on);
       panel.setAttribute('aria-hidden', String(!on));
+      // Author CSS gives every proof panel display:grid, so the semantic hidden
+      // attribute alone is not a sufficient geometry contract in every browser.
+      panel.style.display = on ? '' : 'none';
       panel.style.opacity = '';
       panel.style.transform = '';
     });
@@ -46,6 +49,7 @@
       panel.hidden = false;
       panel.classList.add('is-active');
       panel.setAttribute('aria-hidden', 'false');
+      panel.style.display = '';
       panel.style.opacity = '';
       panel.style.transform = '';
     });
@@ -75,6 +79,7 @@
     });
 
     to.hidden = false;
+    to.style.display = '';
     to.setAttribute('aria-hidden', 'false');
     to.classList.add('is-active');
 
