@@ -9,7 +9,6 @@
   const shell = root.querySelector('.reactor-shell');
 
   let active = Math.max(0, scenes.findIndex(scene => scene.classList.contains('is-active')));
-  let requested = active;
   let transitionId = 0;
   let running = [];
 
@@ -48,7 +47,6 @@
       scene.setAttribute('aria-hidden', i === index ? 'false' : 'true');
     });
     active = index;
-    requested = index;
     running = [];
   };
 
@@ -70,10 +68,12 @@
 
   const transitionTo = (next) => {
     if (next < 0 || next >= scenes.length) return;
-    requested = next;
     setTabs(next);
     if (reduced) return immediate(next);
-    if (next === active && !running.length) return;
+    if (next === active) {
+      if (running.length) immediate(next);
+      return;
+    }
 
     const token = ++transitionId;
     const outgoing = scenes[active];
