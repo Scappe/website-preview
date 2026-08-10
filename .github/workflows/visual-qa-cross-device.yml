@@ -6,9 +6,6 @@ on:
       - apple-design-fluid
     paths:
       - "scripts/**"
-      - "site/**"
-      - "assets/**"
-      - "package.json"
       - ".github/workflows/visual-qa-cross-device.yml"
   workflow_dispatch:
 
@@ -19,6 +16,8 @@ jobs:
   visual-qa:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      QA_BASE_URL: "https://website-preview-6vmb6tjhl-scappes-projects.vercel.app/?_vercel_share=e58MYUczNAsFVCj7COyrLP43dXhJta47"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,34 +27,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install project
-        run: npm install
-
-      - name: Build site from cached assets
-        run: |
-          node scripts/generate-og-image.mjs
-          node scripts/generate-home.mjs
-          node scripts/generate-pages.mjs
-          node scripts/generate-portfolio-v4.mjs
-          node scripts/apply-v5-overrides.mjs
-          node scripts/apply-apple-design.mjs
-          node scripts/apply-apple-design-v2-fixed.mjs
-          node scripts/apply-mobile-performance-v2.mjs
-          node scripts/apply-case-studies-v3.mjs
-          node scripts/publish-site.mjs
-          node scripts/qa-site.mjs
-
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-
-      - name: Serve dist
-        run: |
-          python3 -m http.server 4173 --directory dist > /tmp/axante-http.log 2>&1 &
-          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
-          cat /tmp/axante-http.log
-          exit 1
 
       - name: Run visual QA
         run: node scripts/visual-qa.mjs
