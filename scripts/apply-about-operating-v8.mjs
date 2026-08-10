@@ -19,6 +19,10 @@ const replacements = [
   ['src="script.js"', 'src="/script.js"'],
   ['src="about-operating.js"', 'src="/about-operating.js?v=8.0"'],
   ['href="index.html"', 'href="/"'],
+  ['href="servizi.html#web"', 'href="/servizi#web"'],
+  ['href="servizi.html#marketing"', 'href="/servizi#marketing"'],
+  ['href="servizi.html#brand"', 'href="/servizi#brand"'],
+  ['href="servizi.html#development"', 'href="/servizi#development"'],
   ['href="servizi.html"', 'href="/servizi"'],
   ['href="portfolio.html"', 'href="/portfolio"'],
   ['href="chi-siamo.html"', 'href="/chi-siamo"'],
@@ -45,6 +49,8 @@ const checks = [
   'Daniele', 'Bianca', 'Gabriele', 'Lisa', 'Pietro',
   '/about-operating.css?v=8.0',
   '/about-operating.js?v=8.0',
+  'href="/servizi#web"',
+  'href="/servizi#development"',
   socialImageUrl,
   'summary_large_image'
 ];
