@@ -45,8 +45,8 @@ const checks = [
   'casarossa-product.jpg',
   'unicart-catalog.jpg',
   'unicart-auctions.jpg',
-  'carabetta-category.jpg',
-  'carabetta-new.jpg',
+  'carabetta.jpg',
+  'carabetta-logo.png',
   '/servizi-premium.css?v=16.0',
   '/servizi-premium.js?v=16.0',
   socialImageUrl
