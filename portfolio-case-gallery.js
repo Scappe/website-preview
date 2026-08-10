@@ -1,0 +1,1 @@
+document.querySelectorAll('[data-case-chapter]').forEach((el)=>el.classList.add('is-visible'));
