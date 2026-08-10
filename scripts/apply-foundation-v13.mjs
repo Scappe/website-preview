@@ -5,12 +5,16 @@ const root = process.cwd();
 const siteRoot = path.join(root, 'site');
 const repoAssetsRoot = path.join(root, 'assets');
 const CANONICAL_LOGO = '/assets/media/axante-logo.png';
-const FOUNDATION_VERSION = '13.0';
+const FOUNDATION_VERSION = '13.1';
+const mobileHotfixSource = path.join(root, 'foundation-mobile-hotfix.css');
+const mobileHotfixHref = '/foundation-mobile-hotfix.css?v=13.1';
 
 if (!fs.existsSync(siteRoot)) throw new Error('site directory is missing');
 if (!fs.existsSync(path.join(siteRoot, 'assets', 'media', 'axante-logo.png'))) {
   throw new Error('Canonical Axante logo is missing: site/assets/media/axante-logo.png');
 }
+if (!fs.existsSync(mobileHotfixSource)) throw new Error('foundation-mobile-hotfix.css is missing');
+fs.copyFileSync(mobileHotfixSource, path.join(siteRoot, 'foundation-mobile-hotfix.css'));
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -67,6 +71,10 @@ for (const file of htmlFiles) {
     .replace(/src="\/assets\/axante-logo\.svg"/g, `src="${CANONICAL_LOGO}"`)
     .replace(/src="https:\/\/www\.axante\.it\/wp-content\/uploads\/2021\/08\/axante-logo\.png"/g, `src="${CANONICAL_LOGO}"`);
 
+  if (!html.includes('foundation-mobile-hotfix.css')) {
+    html = html.replace('</head>', `<link rel="stylesheet" href="${mobileHotfixHref}"></head>`);
+  }
+
   if (html !== before) {
     fs.writeFileSync(file, html);
     normalized += 1;
@@ -78,10 +86,16 @@ const origins = {
   'axante-logo.png': 'https://www.axante.it/wp-content/uploads/2021/08/axante-logo.png',
   'casarossa.jpg': 'https://www.axante.it/wp-content/uploads/2025/02/casarossa-screenshot.jpg',
   'casarossa-detail.jpg': snapshot('https://casarossa.it/'),
+  'casarossa-store.jpg': snapshot('https://casarossa.it/store/'),
+  'casarossa-product.jpg': snapshot('https://casarossa.it/store/bottiglia-100ml/'),
   'unicart.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/unicart.jpg',
   'unicart-detail.jpg': snapshot('https://unicartauctions.com/en/'),
+  'unicart-catalog.jpg': snapshot('https://unicartauctions.com/en/shop/'),
+  'unicart-auctions.jpg': snapshot('https://unicartauctions.com/en/auctions-calendar/'),
   'carabetta.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/copertina-sito-carabetta.jpg',
   'carabetta-detail.jpg': snapshot('https://carabetta.eu/'),
+  'carabetta-category.jpg': snapshot('https://carabetta.eu/351-cartoni'),
+  'carabetta-new.jpg': snapshot('https://carabetta.eu/new-products'),
   'carabetta-logo.png': 'https://www.axante.it/wp-content/uploads/2021/08/carabetta-logo.png',
   'weblab.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/weblab.jpg',
   'tda.jpg': 'https://www.axante.it/wp-content/uploads/2021/08/tda.jpg'
@@ -107,13 +121,7 @@ for (const [dir, publicBase, source] of [
     if (seen.has(publicPath)) continue;
     seen.add(publicPath);
     const name = path.basename(file);
-    manifestAssets.push({
-      path: publicPath,
-      category: classify(name),
-      bytes: fs.statSync(file).size,
-      source,
-      origin: origins[name] || null
-    });
+    manifestAssets.push({ path: publicPath, category: classify(name), bytes: fs.statSync(file).size, source, origin: origins[name] || null });
   }
 }
 
@@ -129,4 +137,4 @@ const manifest = {
 fs.mkdirSync(path.join(siteRoot, 'assets'), { recursive: true });
 fs.writeFileSync(path.join(siteRoot, 'assets', 'asset-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
-console.log(`Foundation v${FOUNDATION_VERSION}: normalized ${normalized}/${htmlFiles.length} HTML pages; catalogued ${manifestAssets.length} assets.`);
+console.log(`Foundation v${FOUNDATION_VERSION}: normalized ${normalized}/${htmlFiles.length} HTML pages; catalogued ${manifestAssets.length} assets; mobile foundation hardened.`);
