@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      QA_BASE_URL: "https://website-preview-6vmb6tjhl-scappes-projects.vercel.app/?_vercel_share=e58MYUczNAsFVCj7COyrLP43dXhJta47"
+      QA_BASE_URL: "https://website-preview-8szzcrkd2-scappes-projects.vercel.app/?_vercel_share=fmhO9hS9ERlltoIAkiUfG6KhRbf6EZr2"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
