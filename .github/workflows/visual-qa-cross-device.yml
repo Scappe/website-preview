@@ -11,6 +11,7 @@ on:
       - "servizi.html"
       - "servizi-premium.css"
       - "servizi-premium.js"
+      - "portfolio.html"
   workflow_dispatch:
 
 permissions:
@@ -57,6 +58,9 @@ jobs:
 
       - name: Run services visual QA
         run: node scripts/visual-qa-services.mjs
+
+      - name: Run portfolio visual QA
+        run: node scripts/visual-qa-portfolio.mjs
 
       - name: Upload visual QA artifacts
         if: always()
