@@ -28,8 +28,15 @@ for (const [width,height] of viewports) {
   const context = await browser.newContext({ viewport:{width,height}, deviceScaleFactor:1 });
   const page = await context.newPage();
   const consoleErrors=[];
+  const resourceErrors=[];
   page.on('console',msg=>{if(msg.type()==='error')consoleErrors.push(msg.text());});
   page.on('pageerror',err=>consoleErrors.push(err.message));
+  page.on('response',response=>{
+    if(response.status()>=400) resourceErrors.push(`${response.status()} ${response.url()}`);
+  });
+  page.on('requestfailed',request=>{
+    resourceErrors.push(`REQUEST_FAILED ${request.url()} ${request.failure()?.errorText||''}`.trim());
+  });
   await page.goto(baseURL,{waitUntil:'networkidle'});
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.waitForTimeout(350);
@@ -83,7 +90,7 @@ for (const [width,height] of viewports) {
     if(/^https?:/i.test(asset.primary)||/^https?:/i.test(asset.detail)) failures.push(`${width}x${height}: Reactor runtime hotlink detected ${JSON.stringify(asset)}`);
   }
   if(width<=768&&metrics.canvasDisplay!=='none') failures.push(`${width}x${height}: ambient canvas still active on mobile/tablet`);
-  if(consoleErrors.length) failures.push(`${width}x${height}: console errors ${consoleErrors.join(' | ')}`);
+  if(consoleErrors.length || resourceErrors.length) failures.push(`${width}x${height}: console/resource errors ${[...consoleErrors,...resourceErrors].join(' | ')}`);
 
   const reactorTabs=page.locator('[data-reactor-tab]');
   if(await reactorTabs.count()===3){
@@ -112,7 +119,7 @@ for (const [width,height] of viewports) {
   }
 
   await page.screenshot({path:path.join(out,`home-${width}x${height}.png`),fullPage:true});
-  report.push({viewport:`${width}x${height}`,metrics,consoleErrors});
+  report.push({viewport:`${width}x${height}`,metrics,consoleErrors,resourceErrors});
   await context.close();
 }
 
