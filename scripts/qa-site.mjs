@@ -5,6 +5,8 @@ import sharp from 'sharp';
 const root = path.join(process.cwd(), 'dist');
 const failures = [];
 const socialImage = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
+const canonicalLogo = '/assets/media/axante-logo.png';
+const foundationMarker = 'data-global-component-version="13.0"';
 const requiredFiles = [
   'index.html',
   'home-v5.css',
@@ -20,6 +22,7 @@ const requiredFiles = [
   'sitemap.xml',
   'robots.txt',
   '404.html',
+  'assets/asset-manifest.json',
   'assets/media/axante-logo.png',
   'assets/media/axante-share-v1.png',
   'assets/media/casarossa.jpg',
@@ -53,6 +56,31 @@ function resolvePublicPath(value) {
   return path.join(direct, 'index.html');
 }
 
+function principalPath(route) {
+  if (route === '/') return path.join(root, 'index.html');
+  return path.join(root, route.slice(1), 'index.html');
+}
+
+const principalRoutes = ['/', '/servizi', '/portfolio', '/chi-siamo', '/contatti'];
+for (const route of principalRoutes) {
+  const file = principalPath(route);
+  if (!fs.existsSync(file)) {
+    failures.push(`Missing principal route: ${route}`);
+    continue;
+  }
+  const html = fs.readFileSync(file, 'utf8');
+  const header = html.match(/<header\b[^>]*class="[^"]*site-header[^"]*"[\s\S]*?<\/header>/i)?.[0] || '';
+  const footer = html.match(/<footer\b[^>]*class="[^"]*site-footer[^"]*"[\s\S]*?<\/footer>/i)?.[0] || '';
+  if (!header) failures.push(`${route}: canonical site header missing`);
+  if (!footer) failures.push(`${route}: canonical site footer missing`);
+  if (!header.includes(foundationMarker) || !footer.includes(foundationMarker)) failures.push(`${route}: foundation v13 global marker missing`);
+  if (!header.includes(`src="${canonicalLogo}"`)) failures.push(`${route}: header does not use canonical logo`);
+  if (!footer.includes(`src="${canonicalLogo}"`)) failures.push(`${route}: footer does not use canonical logo`);
+  if (/axante-logo\.svg|www\.axante\.it\/wp-content\/uploads\/2021\/08\/axante-logo\.png/i.test(header + footer)) {
+    failures.push(`${route}: global components still reference a legacy logo`);
+  }
+}
+
 for (const file of htmlFiles) {
   const relative = path.relative(root, file);
   const html = fs.readFileSync(file, 'utf8');
@@ -70,6 +98,16 @@ for (const file of htmlFiles) {
   if (/class="case-media clip-reveal"/.test(html)) failures.push(`${relative}: project media can still be clipped invisible`);
   if (/src="https:\/\/www\.axante\.it\/wp-content\/uploads/i.test(html)) failures.push(`${relative}: runtime image still hotlinks WordPress`);
   if (/home-v4\.(css|js)|portfolio-v4\.css/.test(html)) failures.push(`${relative}: obsolete v4 asset reference`);
+  if (/src="\/assets\/axante-logo\.svg"|src="https:\/\/www\.axante\.it\/wp-content\/uploads\/2021\/08\/axante-logo\.png"/i.test(html)) {
+    failures.push(`${relative}: legacy Axante logo reference survived foundation pass`);
+  }
+
+  const imageTags = [...html.matchAll(/<img\b[^>]*>/gi)].map(match => match[0]);
+  for (const tag of imageTags) {
+    const src = tag.match(/src="([^"]+)"/i)?.[1] || '(unknown image)';
+    const sized = (/\bwidth="\d+"/i.test(tag) && /\bheight="\d+"/i.test(tag)) || /style="[^"]*aspect-ratio/i.test(tag);
+    if (!sized) failures.push(`${relative}: image lacks stable dimensions/aspect ratio: ${src}`);
+  }
 
   const sources = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(match => match[1]);
   for (const source of sources) {
@@ -95,6 +133,21 @@ for (const asset of requiredFiles.filter(file => file.startsWith('assets/media/'
   if (bytes < 500) failures.push(`${asset}: file is empty or invalid (${bytes} bytes)`);
 }
 
+const manifestPath = path.join(root, 'assets', 'asset-manifest.json');
+if (fs.existsSync(manifestPath)) {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    if (manifest.version !== '13.0') failures.push(`asset-manifest.json: expected version 13.0, found ${manifest.version}`);
+    if (manifest.canonicalLogo !== canonicalLogo) failures.push('asset-manifest.json: canonicalLogo mismatch');
+    if (!Array.isArray(manifest.assets) || manifest.assets.length < 7) failures.push('asset-manifest.json: asset catalog unexpectedly small');
+    for (const asset of manifest.assets || []) {
+      if (!asset.path || !asset.category || typeof asset.bytes !== 'number') failures.push('asset-manifest.json: invalid asset record');
+    }
+  } catch (error) {
+    failures.push(`Unable to parse asset-manifest.json: ${error.message}`);
+  }
+}
+
 const socialPath = path.join(root, 'assets/media/axante-share-v1.png');
 if (fs.existsSync(socialPath)) {
   try {
@@ -113,4 +166,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files and branded social previews verified.`);
+console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, canonical globals and ${principalRoutes.length} principal routes verified.`);
