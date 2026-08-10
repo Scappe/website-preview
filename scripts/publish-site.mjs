@@ -30,17 +30,22 @@ const requiredHomeAssets = [
   '/home-v5.js?v=6.3',
   '/fixes-v6.css?v=6.3',
   '/fixes-v6.js?v=6.3',
+  '/apple-design.css?v=1.0',
+  '/apple-design.js?v=1.0',
   socialImageUrl,
   '<meta property="og:image:width" content="1200">',
   '<meta property="og:image:height" content="630">'
 ];
 
 for (const asset of requiredHomeAssets) {
-  if (!home.includes(asset)) throw new Error(`Homepage is missing required v6.3 asset or metadata: ${asset}`);
+  if (!home.includes(asset)) throw new Error(`Homepage is missing required v6.4 asset or metadata: ${asset}`);
 }
 
 if (!portfolio.includes('/portfolio-mobile-performance.css?v=6.3')) {
   throw new Error('Portfolio is missing the mobile performance layer.');
+}
+if (!portfolio.includes('/apple-design.css?v=1.0') || !portfolio.includes('/apple-design.js?v=1.0')) {
+  throw new Error('Portfolio is missing the Apple fluid interaction layer.');
 }
 if (!portfolio.includes(socialImageUrl)) {
   throw new Error('Portfolio is missing the branded Axante social preview.');
@@ -53,6 +58,8 @@ const requiredFiles = [
   'portfolio-mobile-performance.css',
   'fixes-v6.css',
   'fixes-v6.js',
+  'apple-design.css',
+  'apple-design.js',
   'assets/media/axante-logo.png',
   'assets/media/axante-share-v1.png',
   'assets/media/casarossa.jpg',
@@ -66,4 +73,4 @@ for (const relative of requiredFiles) {
   if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
 }
 
-console.log('Published Axante v6.3 with branded social previews and strict validation.');
+console.log('Published Axante v6.4 with Apple-inspired fluid interactions and strict validation.');
