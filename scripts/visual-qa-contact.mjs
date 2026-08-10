@@ -55,5 +55,12 @@ for (const [width,height] of [[390,844],[1366,768]]) {
   await context.close();
 }
 await browser.close();
-if (failures.length) { console.error('CONTACT VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
+if (failures.length) {
+  console.error('CONTACT VISUAL QA FAILED');
+  failures.forEach(x => {
+    console.error(`- ${x}`);
+    console.error(`::error title=Contact visual QA::${x}`);
+  });
+  process.exit(1);
+}
 console.log(`CONTACT VISUAL QA PASSED: ${viewports.length} breakpoints, intake navigation and reduced-motion.`);
