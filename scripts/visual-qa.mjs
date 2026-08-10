@@ -10,7 +10,7 @@ const baseURL = process.env.QA_BASE_URL;
 if (!baseURL) throw new Error('QA_BASE_URL is required.');
 
 const viewports = [
-  [360,800], [390,844], [430,932], [768,1024], [1024,768], [1366,768], [1440,900]
+  [320,720], [360,800], [390,844], [430,932], [768,1024], [1024,768], [1366,768], [1440,900]
 ];
 
 const browser = await chromium.launch({ headless: true });
@@ -31,7 +31,7 @@ for (const [width,height] of viewports) {
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;
     const body = document.body;
-    const essential = [...document.querySelectorAll('h1,.button,.header-cta,.menu-button,.case-chapter,.capability-stage,.cta-panel')];
+    const essential = [...document.querySelectorAll('h1,.button,.btn,.header-cta,.menu-button,.proof-panel,.proof-tab,.cta-panel')];
     const clipped = essential.filter(el => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
@@ -42,15 +42,42 @@ for (const [width,height] of viewports) {
       scrollWidth: Math.max(doc.scrollWidth, body.scrollWidth),
       clientWidth: doc.clientWidth,
       clipped,
-      h1: document.querySelector('h1')?.getBoundingClientRect().toJSON?.() || null,
+      proofCount: document.querySelectorAll('[data-proof-panel]').length,
       canvasDisplay: document.querySelector('.ambient-canvas') ? getComputedStyle(document.querySelector('.ambient-canvas')).display : 'missing'
     };
   });
 
   if (metrics.scrollWidth > metrics.clientWidth + 2) failures.push(`${width}x${height}: horizontal overflow ${metrics.scrollWidth} > ${metrics.clientWidth}`);
   if (metrics.clipped.length) failures.push(`${width}x${height}: clipped essential elements ${JSON.stringify(metrics.clipped)}`);
+  if (metrics.proofCount !== 3) failures.push(`${width}x${height}: expected 3 Proof Spine panels, got ${metrics.proofCount}`);
   if (width <= 768 && metrics.canvasDisplay !== 'none') failures.push(`${width}x${height}: ambient canvas still active on mobile/tablet`);
   if (consoleErrors.length) failures.push(`${width}x${height}: console errors ${consoleErrors.join(' | ')}`);
+
+  if (width <= 680) {
+    const mobileProof = await page.evaluate(() => [...document.querySelectorAll('[data-proof-panel]')].map(panel => {
+      const r = panel.getBoundingClientRect();
+      const s = getComputedStyle(panel);
+      return { hidden: panel.getAttribute('aria-hidden'), display: s.display, visibility: s.visibility, width: r.width };
+    }));
+    if (mobileProof.some(p => p.hidden === 'true' || p.display === 'none' || p.visibility === 'hidden' || p.width <= 0)) failures.push(`${width}x${height}: mobile Proof Spine does not expose all cases ${JSON.stringify(mobileProof)}`);
+  } else {
+    const tabs = page.locator('[data-proof-tab]');
+    if (await tabs.count() !== 3) failures.push(`${width}x${height}: Proof Spine tab controls missing`);
+    else {
+      await tabs.nth(1).click();
+      await page.waitForTimeout(380);
+      const clickState = await page.evaluate(() => ({
+        selected: document.querySelectorAll('[data-proof-tab][aria-selected="true"]').length,
+        selectedText: document.querySelector('[data-proof-tab][aria-selected="true"]')?.textContent || '',
+        activePanel: document.querySelector('[data-proof-panel].is-active')?.id || ''
+      }));
+      if (clickState.selected !== 1 || !clickState.selectedText.includes('Unicart') || clickState.activePanel !== 'proof-panel-unicart') failures.push(`${width}x${height}: click interaction failed ${JSON.stringify(clickState)}`);
+      await tabs.nth(1).focus();
+      await page.keyboard.press('ArrowRight');
+      const keyboardState = await page.evaluate(() => ({ selectedText: document.querySelector('[data-proof-tab][aria-selected="true"]')?.textContent || '', active: document.activeElement?.textContent || '' }));
+      if (!keyboardState.selectedText.includes('Carabetta') || !keyboardState.active.includes('Carabetta')) failures.push(`${width}x${height}: keyboard interaction failed ${JSON.stringify(keyboardState)}`);
+    }
+  }
 
   if (width <= 1024) {
     const menu = page.locator('.menu-button');
@@ -77,13 +104,18 @@ for (const [width,height] of [[390,844],[1366,768]]) {
   const page = await context.newPage();
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.waitForTimeout(300);
-  const visible = await page.evaluate(() => {
-    const items = [...document.querySelectorAll('.reveal,.clip-reveal')];
-    return items.every(el => {
-      const s = getComputedStyle(el); return s.opacity !== '0' && s.visibility !== 'hidden';
-    });
+  const state = await page.evaluate(() => {
+    const reveals = [...document.querySelectorAll('.reveal,.clip-reveal')];
+    const proofPanels = [...document.querySelectorAll('[data-proof-panel]')];
+    return {
+      revealsVisible: reveals.every(el => { const s = getComputedStyle(el); return s.opacity !== '0' && s.visibility !== 'hidden'; }),
+      proofCount: proofPanels.length,
+      transition: proofPanels[0] ? getComputedStyle(proofPanels[0]).transitionDuration : ''
+    };
   });
-  if (!visible) failures.push(`${width}x${height} reduced-motion: hidden reveal content detected`);
+  if (!state.revealsVisible) failures.push(`${width}x${height} reduced-motion: hidden reveal content detected`);
+  if (state.proofCount !== 3) failures.push(`${width}x${height} reduced-motion: Proof Spine content missing`);
+  if (state.transition && state.transition.split(',').some(v => parseFloat(v) > 0)) failures.push(`${width}x${height} reduced-motion: Proof Spine transition still active (${state.transition})`);
   await page.screenshot({ path: path.join(out, `home-${width}x${height}-reduced-motion.png`), fullPage: true });
   await context.close();
 }
@@ -96,4 +128,4 @@ if (failures.length) {
   failures.forEach(f => console.error(`- ${f}`));
   process.exit(1);
 }
-console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + reduced-motion checks.`);
+console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + Proof Spine interaction + reduced-motion checks.`);
