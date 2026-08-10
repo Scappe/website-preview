@@ -1,40 +1,89 @@
 (() => {
   'use strict';
-  const tabs = [...document.querySelectorAll('[data-problem-tab]')];
-  const panels = [...document.querySelectorAll('[data-problem-panel]')];
-  if (!tabs.length || !panels.length) return;
-
+  const root = document.querySelector('[data-service-proof]');
+  if (!root) return;
+  const tabs = [...root.querySelectorAll('[data-proof-tab]')];
+  const panels = [...root.querySelectorAll('[data-proof-panel]')];
   const desktop = window.matchMedia('(min-width: 701px)');
-  const activate = (index, focus = false) => {
-    if (!desktop.matches) return;
-    tabs.forEach((tab, i) => {
-      const active = i === index;
-      tab.setAttribute('aria-selected', String(active));
-      tab.setAttribute('tabindex', active ? '0' : '-1');
-      panels[i]?.classList.toggle('is-active', active);
-      panels[i]?.toggleAttribute('hidden', !active);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let active = 0;
+  let token = 0;
+
+  const cancelAnimations = panel => {
+    panel.getAnimations?.({ subtree: true }).forEach(animation => {
+      try { animation.cancel(); } catch {}
     });
-    if (focus) tabs[index]?.focus();
   };
 
-  const syncLayout = () => {
-    if (desktop.matches) {
-      const current = Math.max(0, tabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true'));
-      activate(current);
-    } else {
-      tabs.forEach(tab => tab.setAttribute('tabindex', '-1'));
-      panels.forEach(panel => {
-        panel.hidden = false;
-        panel.classList.add('is-active');
-      });
+  const setStatic = index => {
+    tabs.forEach((tab, i) => {
+      const on = i === index;
+      tab.setAttribute('aria-selected', String(on));
+      tab.setAttribute('tabindex', on ? '0' : '-1');
+    });
+    panels.forEach((panel, i) => {
+      const on = desktop.matches ? i === index : true;
+      panel.classList.toggle('is-active', on);
+      panel.toggleAttribute('hidden', !on);
+      panel.setAttribute('aria-hidden', String(!on));
+      cancelAnimations(panel);
+    });
+    active = index;
+  };
+
+  const activate = async (index, focus = false) => {
+    if (!desktop.matches || index === active || index < 0 || index >= panels.length) return;
+    const run = ++token;
+    const from = panels[active];
+    const to = panels[index];
+    tabs.forEach((tab, i) => {
+      tab.setAttribute('aria-selected', String(i === index));
+      tab.setAttribute('tabindex', i === index ? '0' : '-1');
+    });
+    cancelAnimations(from); cancelAnimations(to);
+    to.hidden = false;
+    to.setAttribute('aria-hidden', 'false');
+    to.classList.add('is-active');
+
+    if (reduce.matches || !to.animate) {
+      from.hidden = true; from.classList.remove('is-active'); from.setAttribute('aria-hidden','true');
+      active = index;
+      if (focus) tabs[index]?.focus();
+      return;
     }
+
+    const fromVisual = from.querySelector('.proof-visual');
+    const toVisual = to.querySelector('.proof-visual');
+    const fromCopy = from.querySelector('.proof-copy');
+    const toCopy = to.querySelector('.proof-copy');
+    const animations = [
+      from.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-28px)'}],{duration:320,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}),
+      to.animate([{opacity:0,transform:'translateX(34px)'},{opacity:1,transform:'translateX(0)'}],{duration:520,easing:'cubic-bezier(.16,1,.3,1)',fill:'forwards'}),
+      toVisual?.animate([{clipPath:'inset(14% 18% 14% 18% round 28px)',transform:'scale(.96)'},{clipPath:'inset(0 0 0 0 round 0)',transform:'scale(1)'}],{duration:620,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'}),
+      toCopy?.animate([{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}],{duration:460,delay:70,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'}),
+      fromVisual?.animate([{clipPath:'inset(0 0 0 0 round 0)',transform:'scale(1)'},{clipPath:'inset(9% 13% 9% 13% round 24px)',transform:'scale(.97)'}],{duration:350,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}),
+      fromCopy?.animate([{opacity:1},{opacity:0}],{duration:220,fill:'forwards'})
+    ].filter(Boolean);
+
+    try { await Promise.all(animations.map(a => a.finished.catch(() => null))); } catch {}
+    if (run !== token) return;
+    panels.forEach((panel, i) => {
+      const on = i === index;
+      cancelAnimations(panel);
+      panel.classList.toggle('is-active', on);
+      panel.toggleAttribute('hidden', !on);
+      panel.setAttribute('aria-hidden', String(!on));
+      panel.style.opacity = '';
+      panel.style.transform = '';
+    });
+    active = index;
+    if (focus) tabs[index]?.focus();
   };
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => activate(index));
     tab.addEventListener('keydown', event => {
-      if (!desktop.matches) return;
-      if (!['ArrowDown','ArrowUp','ArrowRight','ArrowLeft','Home','End'].includes(event.key)) return;
+      if (!desktop.matches || !['ArrowDown','ArrowUp','ArrowRight','ArrowLeft','Home','End'].includes(event.key)) return;
       event.preventDefault();
       let next = index;
       if (event.key === 'Home') next = 0;
@@ -45,6 +94,21 @@
     });
   });
 
-  desktop.addEventListener?.('change', syncLayout);
-  syncLayout();
+  const sync = () => {
+    token++;
+    if (desktop.matches) setStatic(Math.min(active, tabs.length - 1));
+    else {
+      tabs.forEach(tab => tab.setAttribute('tabindex','-1'));
+      panels.forEach(panel => {
+        cancelAnimations(panel);
+        panel.hidden = false;
+        panel.classList.add('is-active');
+        panel.setAttribute('aria-hidden','false');
+      });
+    }
+  };
+  desktop.addEventListener?.('change', sync);
+  reduce.addEventListener?.('change', sync);
+  setStatic(0);
+  sync();
 })();
