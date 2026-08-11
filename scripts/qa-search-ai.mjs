@@ -154,6 +154,20 @@ else {
   if (contact.html.includes('data-intake-step') || contact.html.includes('data-progress-segment')) failures.push('/contatti/: essential conversion content regressed to hidden wizard states');
 }
 
+const portfolio = pages.find(page => page.route === '/portfolio/');
+if (!portfolio) failures.push('/portfolio/: missing from built HTML corpus');
+else {
+  const requiredProofPhrases = ['Problemi reali.','Casa Rossa','Unicart Auctions','Carabetta','Decisione Axante','Output','Prova osservabile','Il criterio dietro i casi'];
+  for (const phrase of requiredProofPhrases) if (!portfolio.html.includes(phrase)) failures.push(`/portfolio/: essential static proof content missing: ${phrase}`);
+  for (const href of ['/servizi#web','/servizi#development','/servizi#brand','/contatti']) if (!portfolio.html.includes(`href="${href}"`)) failures.push(`/portfolio/: missing descriptive proof/capability path ${href}`);
+  if (/href=["']\/portfolio\/(?:casa-rossa|unicart|carabetta)\/?["']/i.test(portfolio.html)) failures.push('/portfolio/: invented standalone case-study route linked from portfolio');
+  const proofLabels = (portfolio.html.match(/Prova osservabile/g) || []).length;
+  const decisionLabels = (portfolio.html.match(/Decisione Axante/g) || []).length;
+  if (proofLabels < 3) failures.push(`/portfolio/: expected proof layer for 3 principal cases, found ${proofLabels}`);
+  if (decisionLabels < 3) failures.push(`/portfolio/: expected decision layer for 3 principal cases, found ${decisionLabels}`);
+  if (!/Casa Rossa[\s\S]{0,9000}Unicart Auctions[\s\S]{0,9000}Carabetta/i.test(portfolio.html)) failures.push('/portfolio/: principal cases are not statically present in the intended narrative order');
+}
+
 if (failures.length) {
   console.error('\nSEARCH/AI QA FAILED');
   failures.forEach(failure => console.error(`- ${failure}`));
