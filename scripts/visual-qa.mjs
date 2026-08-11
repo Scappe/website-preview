@@ -8,6 +8,7 @@ fs.mkdirSync(out, { recursive: true });
 const baseURL = process.env.QA_BASE_URL;
 if (!baseURL) throw new Error('QA_BASE_URL is required.');
 const viewports = [[320,760],[360,800],[390,844],[430,932],[768,1024],[1024,768],[1366,768],[1440,900]];
+const MOBILE_HEADER_MAX = 1024;
 const browser = await chromium.launch({ headless: true });
 const failures = [];
 const report = [];
@@ -67,13 +68,16 @@ for (const [width,height] of viewports) {
     const logo=document.querySelector('.site-header .logo');
     const navVisible=nav?visible(nav):false, menuVisible=menu?visible(menu):false;
     const logoRect=logo?.getBoundingClientRect();
+    const menuRect=menu?.getBoundingClientRect();
     const reactorScenes=[...document.querySelectorAll('[data-reactor-scene]')];
     return {
       scrollWidth:Math.max(doc.scrollWidth,body.scrollWidth),clientWidth:doc.clientWidth,clipped,tabOverlaps,actionOverlaps,
       proofCount:document.querySelectorAll('[data-proof-panel]').length,reactorCount:reactorScenes.length,reactorTabs:document.querySelectorAll('[data-reactor-tab]').length,
       reactorAssets:reactorScenes.map(scene=>({primary:scene.querySelector('[data-reactor-primary]')?.getAttribute('src')||'',detail:scene.querySelector('[data-reactor-detail] img')?.getAttribute('src')||''})),
       canvasDisplay:document.querySelector('.ambient-canvas')?getComputedStyle(document.querySelector('.ambient-canvas')).display:'missing',
-      navVisible,menuVisible,logoWidth:logoRect?.width||0
+      navVisible,menuVisible,logoWidth:logoRect?.width||0,
+      menuWidth:menuRect?.width||0,menuHeight:menuRect?.height||0,
+      menuExpanded:menu?.getAttribute('aria-expanded')||null
     };
   });
 
@@ -81,7 +85,13 @@ for (const [width,height] of viewports) {
   if(metrics.clipped.length) failures.push(`${width}x${height}: clipped essential elements ${JSON.stringify(metrics.clipped)}`);
   if(metrics.tabOverlaps.length) failures.push(`${width}x${height}: Reactor tabs overlap ${JSON.stringify(metrics.tabOverlaps)}`);
   if(metrics.actionOverlaps.length) failures.push(`${width}x${height}: hero actions overlap ${JSON.stringify(metrics.actionOverlaps)}`);
-  if(width<=980 && (metrics.navVisible || !metrics.menuVisible)) failures.push(`${width}x${height}: mobile header shows desktop nav or hides menu button`);
+  if(width<=MOBILE_HEADER_MAX){
+    if(metrics.navVisible || !metrics.menuVisible) failures.push(`${width}x${height}: mobile/tablet header shows desktop nav or hides menu button`);
+    if(metrics.menuWidth<44 || metrics.menuHeight<44) failures.push(`${width}x${height}: menu toggle below 44x44 ${metrics.menuWidth}x${metrics.menuHeight}`);
+    if(metrics.menuExpanded!=='false') failures.push(`${width}x${height}: closed header aria-expanded must be false, got ${metrics.menuExpanded}`);
+  } else {
+    if(!metrics.navVisible || metrics.menuVisible) failures.push(`${width}x${height}: desktop header does not expose desktop nav cleanly`);
+  }
   if(width<=600 && (metrics.logoWidth<90 || metrics.logoWidth>150)) failures.push(`${width}x${height}: mobile logo width suspicious ${metrics.logoWidth}`);
   if(metrics.proofCount!==3) failures.push(`${width}x${height}: expected 3 Proof Spine panels, got ${metrics.proofCount}`);
   if(metrics.reactorCount!==3||metrics.reactorTabs!==3) failures.push(`${width}x${height}: expected 3 Reactor scenes/tabs, got ${metrics.reactorCount}/${metrics.reactorTabs}`);
@@ -108,14 +118,31 @@ for (const [width,height] of viewports) {
     if(mobileProof.some(p=>p.hidden==='true'||p.display==='none'||p.visibility==='hidden'||p.width<=0)) failures.push(`${width}x${height}: mobile Proof Spine does not expose all cases ${JSON.stringify(mobileProof)}`);
   }
 
-  if(width<=980){
+  if(width<=MOBILE_HEADER_MAX){
     const menu=page.locator('.menu-toggle');
     if(await menu.count()){
-      await menu.click();await page.waitForTimeout(220);
-      const menuState=await page.evaluate(()=>{const nav=document.querySelector('.nav');const b=nav?.getBoundingClientRect();const s=nav?getComputedStyle(nav):null;return nav?{open:nav.classList.contains('open'),display:s.display,left:b.left,right:b.right,top:b.top,bottom:b.bottom}:null;});
-      if(!menuState?.open||menuState.display==='none'||menuState.left<-2||menuState.right>width+2) failures.push(`${width}x${height}: mobile menu out of viewport or not open ${JSON.stringify(menuState)}`);
       await menu.click();
-    }
+      await page.waitForTimeout(220);
+      const openState=await page.evaluate(()=>{
+        const nav=document.querySelector('.site-header .nav');
+        const menu=document.querySelector('.site-header .menu-toggle');
+        const b=nav?.getBoundingClientRect();
+        const s=nav?getComputedStyle(nav):null;
+        return nav?{open:nav.classList.contains('open'),display:s.display,left:b.left,right:b.right,top:b.top,bottom:b.bottom,expanded:menu?.getAttribute('aria-expanded')||null}:null;
+      });
+      if(!openState?.open||openState.display==='none'||openState.left<-2||openState.right>width+2||openState.top<-2||openState.bottom>height+2||openState.expanded!=='true') failures.push(`${width}x${height}: mobile menu open state invalid ${JSON.stringify(openState)}`);
+
+      await menu.click();
+      await page.waitForTimeout(120);
+      const closedState=await page.evaluate(()=>{
+        const nav=document.querySelector('.site-header .nav');
+        const menu=document.querySelector('.site-header .menu-toggle');
+        const r=nav?.getBoundingClientRect();
+        const s=nav?getComputedStyle(nav):null;
+        return {open:nav?.classList.contains('open')||false,visible:!!nav&&s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0,expanded:menu?.getAttribute('aria-expanded')||null};
+      });
+      if(closedState.open||closedState.visible||closedState.expanded!=='false') failures.push(`${width}x${height}: mobile menu close state invalid ${JSON.stringify(closedState)}`);
+    } else failures.push(`${width}x${height}: canonical menu toggle missing from DOM`);
   }
 
   await page.screenshot({path:path.join(out,`home-${width}x${height}.png`),fullPage:true});
@@ -138,4 +165,4 @@ for(const [width,height] of [[390,844],[1366,768]]){
 await browser.close();
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({report,failures},null,2));
 if(failures.length){console.error('VISUAL QA FAILED');failures.forEach(f=>console.error(`- ${f}`));process.exit(1);}
-console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + real mobile header/collision checks + Reactor interaction + reduced-motion.`);
+console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + canonical <=1024 header open/close contract + Reactor interaction + reduced-motion.`);
