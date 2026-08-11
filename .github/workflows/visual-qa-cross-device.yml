@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - apple-design-fluid
-    # Intentionally broad: any non-documentation change can affect the rendered site
-    # through the cumulative build pipeline. This prevents visual files/components from
-    # silently falling outside QA when new CSS/JS/assets/generators are introduced.
     paths-ignore:
       - "**/*.md"
       - "diagnostics/**"
@@ -79,11 +76,19 @@ jobs:
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Run studio operating visual QA
+      - name: Run human studio story visual QA
         id: about_qa
         run: |
           set +e
           node scripts/visual-qa-about.mjs
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Capture benchmark evidence
+        id: benchmark_qa
+        run: |
+          set +e
+          node scripts/benchmark-capture.mjs
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           exit 0
@@ -96,11 +101,13 @@ jobs:
           echo "portfolio=${{ steps.portfolio_qa.outputs.code }}"
           echo "contact=${{ steps.contact_qa.outputs.code }}"
           echo "about=${{ steps.about_qa.outputs.code }}"
+          echo "benchmark=${{ steps.benchmark_qa.outputs.code }}"
           test "${{ steps.home_qa.outputs.code }}" = "0"
           test "${{ steps.services_qa.outputs.code }}" = "0"
           test "${{ steps.portfolio_qa.outputs.code }}" = "0"
           test "${{ steps.contact_qa.outputs.code }}" = "0"
           test "${{ steps.about_qa.outputs.code }}" = "0"
+          test "${{ steps.benchmark_qa.outputs.code }}" = "0"
 
       - name: Upload visual QA artifacts
         if: always()
