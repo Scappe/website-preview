@@ -19,6 +19,7 @@
       tab.tabIndex = on ? 0 : -1;
       panels[i].classList.toggle('is-active', on);
       panels[i].setAttribute('aria-hidden', mqDesktop.matches ? String(!on) : 'false');
+      if (mqDesktop.matches) panels[i].style.display = on ? 'grid' : 'none';
     });
     if (moveFocus) tabs[active].focus({ preventScroll: true });
   };
@@ -29,7 +30,10 @@
       activate(active);
     } else {
       root.classList.remove('is-enhanced');
-      panels.forEach(panel => panel.setAttribute('aria-hidden', 'false'));
+      panels.forEach(panel => {
+        panel.setAttribute('aria-hidden', 'false');
+        panel.style.removeProperty('display');
+      });
       tabs.forEach(tab => { tab.tabIndex = 0; });
     }
   };
