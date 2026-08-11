@@ -44,7 +44,7 @@ for (const [width,height] of viewports) {
 
   const metrics = await page.evaluate(() => {
     const doc=document.documentElement, body=document.body;
-    const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;};
+    const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&parseFloat(s.opacity||'1')>.01&&r.width>0&&r.height>0;};
     const essential=[...document.querySelectorAll('h1,.button,.btn,.nav-cta,.menu-toggle,.reactor-stage,.reactor-controls,.reactor-tab,.cta-panel,.site-header .logo')].filter(visible);
     const clipped=essential.filter(el=>{const r=el.getBoundingClientRect();return r.right>innerWidth+2||r.left<-2;}).map(el=>({tag:el.tagName,cls:el.className,text:(el.textContent||'').trim().slice(0,80)}));
     const reactorTabs=[...document.querySelectorAll('[data-reactor-tab]')].filter(visible);
@@ -70,9 +70,10 @@ for (const [width,height] of viewports) {
     const logoRect=logo?.getBoundingClientRect();
     const menuRect=menu?.getBoundingClientRect();
     const reactorScenes=[...document.querySelectorAll('[data-reactor-scene]')];
+    const proofPanels=[...document.querySelectorAll('[data-proof-panel]')];
     return {
       scrollWidth:Math.max(doc.scrollWidth,body.scrollWidth),clientWidth:doc.clientWidth,clipped,tabOverlaps,actionOverlaps,
-      proofCount:document.querySelectorAll('[data-proof-panel]').length,reactorCount:reactorScenes.length,reactorTabs:document.querySelectorAll('[data-reactor-tab]').length,
+      proofCount:proofPanels.length,visibleProofCount:proofPanels.filter(visible).length,reactorCount:reactorScenes.length,reactorTabs:document.querySelectorAll('[data-reactor-tab]').length,
       reactorAssets:reactorScenes.map(scene=>({primary:scene.querySelector('[data-reactor-primary]')?.getAttribute('src')||'',detail:scene.querySelector('[data-reactor-detail] img')?.getAttribute('src')||''})),
       canvasDisplay:document.querySelector('.ambient-canvas')?getComputedStyle(document.querySelector('.ambient-canvas')).display:'missing',
       navVisible,menuVisible,logoWidth:logoRect?.width||0,
@@ -94,6 +95,8 @@ for (const [width,height] of viewports) {
   }
   if(width<=600 && (metrics.logoWidth<90 || metrics.logoWidth>150)) failures.push(`${width}x${height}: mobile logo width suspicious ${metrics.logoWidth}`);
   if(metrics.proofCount!==3) failures.push(`${width}x${height}: expected 3 Proof Spine panels, got ${metrics.proofCount}`);
+  if(width>680 && metrics.visibleProofCount!==1) failures.push(`${width}x${height}: desktop Proof Spine must expose exactly one panel, got ${metrics.visibleProofCount}`);
+  if(width<=680 && metrics.visibleProofCount!==3) failures.push(`${width}x${height}: mobile Proof Spine must expose all three cases, got ${metrics.visibleProofCount}`);
   if(metrics.reactorCount!==3||metrics.reactorTabs!==3) failures.push(`${width}x${height}: expected 3 Reactor scenes/tabs, got ${metrics.reactorCount}/${metrics.reactorTabs}`);
   for(const asset of metrics.reactorAssets){
     if(!asset.primary||!asset.detail||asset.primary===asset.detail) failures.push(`${width}x${height}: Reactor scene lacks distinct primary/detail asset ${JSON.stringify(asset)}`);
@@ -111,6 +114,22 @@ for (const [width,height] of viewports) {
     for(const key of ['ArrowRight','ArrowRight','Home','End','ArrowLeft']) await page.keyboard.press(key);
     await page.waitForTimeout(width<=600?560:690);
     validateReactorState(`${width}x${height} rapid-keyboard`,await reactorState(page),1);
+  }
+
+  if(width>680){
+    const proofTabs=page.locator('[data-proof-tab]');
+    if(await proofTabs.count()===3){
+      for(const index of [1,2,0]){
+        await proofTabs.nth(index).click({force:true});
+        await page.waitForTimeout(40);
+        const state=await page.evaluate(()=>{
+          const panels=[...document.querySelectorAll('[data-proof-panel]')];
+          const visible=panels.filter(panel=>{const s=getComputedStyle(panel),r=panel.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&parseFloat(s.opacity||'1')>.01&&r.width>0&&r.height>0;});
+          return {visible:visible.length,selected:document.querySelectorAll('[data-proof-tab][aria-selected="true"]').length,active:panels.findIndex(panel=>panel.classList.contains('is-active'))};
+        });
+        if(state.visible!==1||state.selected!==1||state.active!==index) failures.push(`${width}x${height}: Proof Spine state invalid after selecting ${index}: ${JSON.stringify(state)}`);
+      }
+    }
   }
 
   if(width<=680){
@@ -165,4 +184,4 @@ for(const [width,height] of [[390,844],[1366,768]]){
 await browser.close();
 fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({report,failures},null,2));
 if(failures.length){console.error('VISUAL QA FAILED');failures.forEach(f=>console.error(`- ${f}`));process.exit(1);}
-console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + canonical <=1024 header open/close contract + Reactor interaction + reduced-motion.`);
+console.log(`VISUAL QA PASSED: ${viewports.length} breakpoints + canonical <=1024 header open/close contract + Reactor interaction + Proof Spine visibility/state + reduced-motion.`);
