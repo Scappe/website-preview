@@ -15,8 +15,14 @@ for (const [width,height] of viewports) {
   const context = await browser.newContext({ viewport: { width, height } });
   const page = await context.newPage();
   const errors = [];
-  page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
-  page.on('pageerror', err => errors.push(err.message));
+  const badResponses = [];
+  const failedRequests = [];
+  page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
+  page.on('pageerror', err => errors.push(`pageerror: ${err.message}`));
+  page.on('response', response => {
+    if (response.status() >= 400) badResponses.push(`${response.status()} ${response.request().resourceType()} ${response.url()}`);
+  });
+  page.on('requestfailed', request => failedRequests.push(`${request.resourceType()} ${request.url()} ${request.failure()?.errorText || 'failed'}`));
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
   const metrics = await page.evaluate(() => ({
@@ -38,7 +44,10 @@ for (const [width,height] of viewports) {
   for (const name of ['Casa Rossa','Unicart Auctions','Carabetta']) if (!metrics.cases.includes(name)) failures.push(`${width}x${height}: missing ${name}`);
   if (metrics.archiveCards < 2) failures.push(`${width}x${height}: selected archive incomplete`);
   if (!metrics.cta.includes('Portaci il problema')) failures.push(`${width}x${height}: contextual conversion bridge missing`);
-  if (errors.length) failures.push(`${width}x${height}: console/page errors ${errors.join(' | ')}`);
+  if (badResponses.length) failures.push(`${width}x${height}: HTTP failures ${[...new Set(badResponses)].join(' | ')}`);
+  if (failedRequests.length) failures.push(`${width}x${height}: request failures ${[...new Set(failedRequests)].join(' | ')}`);
+  const nonNetworkErrors = errors.filter(error => !/Failed to load resource: the server responded with a status of 404/i.test(error));
+  if (nonNetworkErrors.length) failures.push(`${width}x${height}: console/page errors ${[...new Set(nonNetworkErrors)].join(' | ')}`);
   const contact = page.locator('.portfolio-conversion-panel a[href="/contatti"]');
   await contact.focus();
   if (!(await contact.evaluate(el => el === document.activeElement))) failures.push(`${width}x${height}: CTA keyboard focus failed`);
