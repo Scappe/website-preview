@@ -1,4 +1,4 @@
-@media (max-width:980px){
+@media (max-width:1024px){
   .site-header .nav-wrap{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
   .site-header .logo{width:clamp(104px,28vw,132px)!important;max-width:34vw!important;margin-right:auto!important;flex:0 0 auto!important}
   .site-header .logo img{display:block!important;width:100%!important;height:auto!important;max-width:100%!important}
