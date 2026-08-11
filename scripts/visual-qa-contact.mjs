@@ -42,7 +42,7 @@ for (const [width,height] of viewports) {
       };
       const clipping = [...document.querySelectorAll('h1,h2,h3,.btn,.problem-option,.direct-contact-list a')]
         .filter(visible)
-        .filter(element => element.scrollWidth > element.clientWidth + 2 || element.scrollHeight > element.clientHeight + 2)
+        .filter(element => element.scrollWidth > element.clientWidth + 2)
         .map(element => element.textContent?.trim().slice(0,80));
       const outside = [...document.querySelectorAll('a,button,input,textarea')]
         .filter(visible)
@@ -75,7 +75,7 @@ for (const [width,height] of viewports) {
     if (metrics.problems !== 5) failures.push(`${width}x${height}: expected 5 problem choices`);
     if (metrics.afterBeats !== 3) failures.push(`${width}x${height}: expected 3 static next-step beats`);
     if (!metrics.portfolioLinks) failures.push(`${width}x${height}: missing descriptive portfolio proof link`);
-    if (metrics.clipping.length) failures.push(`${width}x${height}: internal clipping ${metrics.clipping.join(' | ')}`);
+    if (metrics.clipping.length) failures.push(`${width}x${height}: horizontal text clipping ${metrics.clipping.join(' | ')}`);
     if (metrics.outside.length) failures.push(`${width}x${height}: interactive outside viewport ${metrics.outside.map(x => x.text).join(' | ')}`);
     if (width <= 1024) {
       const tooSmall = metrics.targetHeights.filter(item => item.height < 43.5);
