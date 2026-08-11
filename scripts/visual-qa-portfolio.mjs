@@ -25,25 +25,48 @@ for (const [width,height] of viewports) {
   page.on('requestfailed', request => failedRequests.push(`${request.resourceType()} ${request.url()} ${request.failure()?.errorText || 'failed'}`));
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
-  const metrics = await page.evaluate(() => ({
-    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-    clientWidth: document.documentElement.clientWidth,
-    chapters: document.querySelectorAll('[data-case-chapter]').length,
-    storySteps: document.querySelectorAll('.case-step').length,
-    proofSteps: document.querySelectorAll('.case-step.is-proof').length,
-    archiveCards: document.querySelectorAll('.archive-card').length,
-    hero: document.querySelector('h1')?.textContent?.trim() || '',
-    cases: [...document.querySelectorAll('.case-chapter h2')].map(el => el.textContent?.trim()),
-    cta: document.querySelector('.portfolio-conversion-panel')?.textContent || '',
-    badTargets: [...document.querySelectorAll('a,button')].filter(el => { const r=el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (r.width < 40 || r.height < 40); }).length
-  }));
+  const metrics = await page.evaluate(() => {
+    const rect = el => el?.getBoundingClientRect();
+    const overlaps = (a,b) => a && b && a.left < b.right - 2 && a.right > b.left + 2 && a.top < b.bottom - 2 && a.bottom > b.top + 2;
+    const keyTargets = [...document.querySelectorAll('.portfolio-hero-actions a,.case-links a,.portfolio-conversion-panel a,.menu-toggle')]
+      .filter(el => { const r=rect(el); return r && r.width > 0 && r.height > 0; });
+    const clipped = [...document.querySelectorAll('.portfolio-story h1,.portfolio-story h2,.portfolio-story p,.portfolio-story a,.portfolio-story figcaption')]
+      .filter(el => el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2).length;
+    const chapters = [...document.querySelectorAll('[data-case-chapter]')];
+    const desktopCollisions = innerWidth >= 1366 ? chapters.filter(chapter => {
+      const visual = rect(chapter.querySelector('.case-visual'));
+      const copy = rect(chapter.querySelector('.case-copy'));
+      return overlaps(visual, copy);
+    }).length : 0;
+    const feature = rect(document.querySelector('.portfolio-hero-feature'));
+    return {
+      scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+      clientWidth: document.documentElement.clientWidth,
+      chapters: chapters.length,
+      storySteps: document.querySelectorAll('.case-step').length,
+      proofSteps: document.querySelectorAll('.case-step.is-proof').length,
+      decisionSteps: [...document.querySelectorAll('.case-step small')].filter(el => el.textContent?.trim() === 'Decisione Axante').length,
+      archiveCards: document.querySelectorAll('.archive-card').length,
+      hero: document.querySelector('h1')?.textContent?.trim() || '',
+      caseLabels: [...document.querySelectorAll('.case-number span')].map(el => el.textContent?.trim() || ''),
+      cta: document.querySelector('.portfolio-conversion-panel')?.textContent || '',
+      featureVisibleEarly: Boolean(feature && feature.width >= 200 && feature.height >= 120 && feature.top < innerHeight),
+      smallTargets: keyTargets.filter(el => { const r=rect(el); return r.width < 44 || r.height < 44; }).length,
+      clipped,
+      desktopCollisions
+    };
+  });
   if (metrics.scrollWidth > metrics.clientWidth + 2) failures.push(`${width}x${height}: overflow ${metrics.scrollWidth}>${metrics.clientWidth}`);
   if (metrics.chapters !== 3) failures.push(`${width}x${height}: expected 3 protagonist case chapters`);
-  if (metrics.storySteps < 12 || metrics.proofSteps !== 3) failures.push(`${width}x${height}: case narrative incomplete`);
-  if (!metrics.hero.includes('Mostriamo cosa cambia')) failures.push(`${width}x${height}: wrong proof-first hero`);
-  for (const name of ['Casa Rossa','Unicart Auctions','Carabetta']) if (!metrics.cases.includes(name)) failures.push(`${width}x${height}: missing ${name}`);
+  if (metrics.storySteps < 15 || metrics.proofSteps !== 3 || metrics.decisionSteps !== 3) failures.push(`${width}x${height}: case narrative/proof layers incomplete`);
+  if (!metrics.hero.includes('Problemi reali') || !metrics.hero.includes('Sistemi costruiti')) failures.push(`${width}x${height}: wrong proof-first hero`);
+  for (const name of ['Casa Rossa','Unicart Auctions','Carabetta']) if (!metrics.caseLabels.some(label => label.includes(name))) failures.push(`${width}x${height}: missing ${name}`);
+  if (!metrics.featureVisibleEarly) failures.push(`${width}x${height}: real project proof is not visible in the first viewport`);
   if (metrics.archiveCards < 2) failures.push(`${width}x${height}: selected archive incomplete`);
   if (!metrics.cta.includes('Portaci il problema')) failures.push(`${width}x${height}: contextual conversion bridge missing`);
+  if (width <= 1024 && metrics.smallTargets) failures.push(`${width}x${height}: ${metrics.smallTargets} key touch targets below 44px`);
+  if (metrics.clipped) failures.push(`${width}x${height}: ${metrics.clipped} key copy/CTA elements internally clipped`);
+  if (metrics.desktopCollisions) failures.push(`${width}x${height}: ${metrics.desktopCollisions} case media/copy collisions`);
   if (badResponses.length) failures.push(`${width}x${height}: HTTP failures ${[...new Set(badResponses)].join(' | ')}`);
   if (failedRequests.length) failures.push(`${width}x${height}: request failures ${[...new Set(failedRequests)].join(' | ')}`);
   const nonNetworkErrors = errors.filter(error => !/Failed to load resource: the server responded with a status of 404/i.test(error));
@@ -65,4 +88,4 @@ for (const [width,height] of [[390,844],[1366,768]]) {
 }
 await browser.close();
 if (failures.length) { console.error('PORTFOLIO VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
-console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, keyboard focus and reduced-motion.`);
+console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, collision/clipping/touch checks, keyboard focus and reduced-motion.`);
