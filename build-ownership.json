@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "policy": "Final-output ownership. Legacy passes may prepare intermediate markup but must not own final globals/resources.",
+  "version": 2,
+  "policy": "Final-output ownership. Legacy passes may prepare distinct intermediate chapters but must not rewrite another family's final component.",
   "families": {
     "global-header-footer-logo": {
       "owner": "scripts/apply-foundation-v13.mjs",
@@ -13,16 +13,22 @@
       "outputs": ["site/styles.css", "site/home-v5.css", "site/foundation-mobile-hotfix.css"],
       "forbidden": ["fonts.googleapis.com", "fonts.gstatic.com"]
     },
+    "home-proof-spine": {
+      "owner": "scripts/apply-home-proof-spine-v10.mjs",
+      "stage": "route-content",
+      "outputs": ["site/index.html", "site/home-proof-spine.css", "site/home-proof-spine.js"]
+    },
+    "home-decision-room": {
+      "owner": "scripts/apply-home-decision-room-v11-safe.mjs",
+      "stage": "route-content",
+      "outputs": ["site/index.html", "site/home-decision-room.css", "site/home-decision-room.js"]
+    },
     "home-signature-reactor": {
       "owner": "scripts/apply-home-reactor-v14.mjs",
       "stage": "route-final",
       "outputs": ["site/index.html", "site/home-reactor.css", "site/home-reactor.js"],
-      "supersedes": [
-        "scripts/apply-home-evidence-v9.mjs",
-        "scripts/apply-home-proof-spine-v10.mjs",
-        "scripts/apply-home-decision-room-v11-safe.mjs"
-      ],
-      "notes": "Legacy Home passes remain intermediate dependencies for now; Reactor is the only final owner."
+      "superseded": ["scripts/apply-home-evidence-v9.mjs"],
+      "notes": "Reactor now owns the Home hero/bridge directly. Proof Spine and Decision Room remain separate non-overlapping chapter owners. The superseded Evidence pass is not executed by the canonical build."
     },
     "search-surface": {
       "owner": "scripts/generate-search-surface.mjs",
@@ -38,9 +44,11 @@
   "buildOrder": [
     "generate assets/base pages",
     "legacy visual preparation passes",
-    "route-specific proof/service/contact/about/portfolio passes",
+    "route-specific service/contact/about/portfolio passes",
+    "Home Proof Spine chapter",
+    "Home Decision Room chapter",
     "foundation final globals/resources",
-    "home signature reactor final owner",
+    "Home Reactor direct hero/bridge owner",
     "search surface finalization",
     "publish",
     "site + ownership + search QA"
