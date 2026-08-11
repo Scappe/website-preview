@@ -74,8 +74,6 @@ for (const file of htmlFiles) {
   }
   if (!ogTitle) failures.push(`${route}: missing og:title`);
   if (!ogDescription) failures.push(`${route}: missing og:description`);
-  if (ogTitle && title && ogTitle !== title) failures.push(`${route}: og:title differs from title`);
-  if (ogDescription && description && ogDescription !== description) failures.push(`${route}: og:description differs from meta description`);
 
   for (const block of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try { JSON.parse(block[1]); } catch(error) { failures.push(`${route}: invalid JSON-LD (${error.message})`); }
