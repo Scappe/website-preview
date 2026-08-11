@@ -5,9 +5,9 @@ const root = process.cwd();
 const siteRoot = path.join(root, 'site');
 const repoAssetsRoot = path.join(root, 'assets');
 const CANONICAL_LOGO = '/assets/media/axante-logo.png';
-const FOUNDATION_VERSION = '13.2';
+const FOUNDATION_VERSION = '13.1';
 const mobileHotfixSource = path.join(root, 'foundation-mobile-hotfix.css');
-const mobileHotfixHref = '/foundation-mobile-hotfix.css?v=13.2';
+const mobileHotfixHref = '/foundation-mobile-hotfix.css?v=13.1';
 
 if (!fs.existsSync(siteRoot)) throw new Error('site directory is missing');
 if (!fs.existsSync(path.join(siteRoot, 'assets', 'media', 'axante-logo.png'))) {
