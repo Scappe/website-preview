@@ -16,6 +16,9 @@
   .site-header .menu-toggle[aria-expanded="true"] span::before{transform:translateY(2px) rotate(45deg)!important}
   .site-header .menu-toggle[aria-expanded="true"] span::after{transform:translateY(0) rotate(-45deg)!important}
 }
+@media (min-width:1025px){
+  .site-header .menu-toggle{display:none!important}
+}
 .services-page .proof-frame-logo{background:radial-gradient(circle at 50% 45%,rgba(239,10,114,.1),transparent 60%),#0b0b0f!important}.services-page .proof-frame-logo img{object-fit:contain!important;padding:18%!important}
 @media (max-width:600px){
   .actions,.reactor-copy .actions{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%!important;gap:10px!important;align-items:stretch!important}
