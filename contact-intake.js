@@ -1,119 +1,108 @@
 (() => {
   'use strict';
 
-  const intake = document.querySelector('[data-project-intake]');
-  if (!intake) return;
+  const form = document.querySelector('[data-project-intake]');
+  if (!form) return;
 
-  const steps = [...intake.querySelectorAll('[data-intake-step]')];
-  const progress = [...intake.querySelectorAll('[data-progress-segment]')];
-  const nextButtons = intake.querySelectorAll('[data-next-step]');
-  const backButtons = intake.querySelectorAll('[data-prev-step]');
-  const form = intake.querySelector('form');
-  const status = intake.querySelector('.intake-status');
-  let current = 0;
-
-  const showStep = index => {
-    current = Math.max(0, Math.min(index, steps.length - 1));
-    steps.forEach((step, i) => {
-      step.classList.toggle('is-active', i === current);
-      step.hidden = i !== current;
-    });
-    progress.forEach((segment, i) => {
-      segment.classList.toggle('is-done', i < current);
-      segment.classList.toggle('is-current', i === current);
-    });
-    const label = intake.querySelector('[data-step-count]');
-    if (label) label.textContent = `Step ${current + 1} di ${steps.length}`;
-    const heading = steps[current]?.querySelector('h2');
-    if (heading && current > 0) heading.focus({ preventScroll: true });
-    updateSummary();
-  };
+  const status = form.querySelector('.intake-status');
+  const submit = form.querySelector('[type="submit"]');
+  const initialSubmitLabel = submit?.textContent || 'Prepara il messaggio ↗';
+  let submitting = false;
 
   const value = name => String(new FormData(form).get(name) || '').trim();
   const errorFor = name => form.querySelector(`[data-error-for="${name}"]`);
+  const fieldsFor = name => [...form.querySelectorAll(`[name="${name}"]`)];
+
   const setError = (name, message) => {
-    const field = form.elements.namedItem(name);
-    if (field && 'setAttribute' in field) field.setAttribute('aria-invalid', message ? 'true' : 'false');
+    fieldsFor(name).forEach(field => field.setAttribute('aria-invalid', message ? 'true' : 'false'));
     const error = errorFor(name);
     if (error) error.textContent = message;
   };
 
-  const validateStep = index => {
-    let valid = true;
-    if (index === 0) {
-      const problem = value('problem');
-      if (!problem) {
-        const error = errorFor('problem');
-        if (error) error.textContent = 'Scegli il problema che descrive meglio la situazione.';
-        valid = false;
-      } else {
-        const error = errorFor('problem');
-        if (error) error.textContent = '';
-      }
+  const setState = (state, message = '') => {
+    form.dataset.state = state;
+    if (status) status.textContent = message;
+    if (submit) {
+      submit.disabled = state === 'submitting';
+      submit.setAttribute('aria-busy', state === 'submitting' ? 'true' : 'false');
+      submit.textContent = state === 'submitting' ? 'Preparo il messaggio…' : initialSubmitLabel;
     }
-    if (index === 1) {
-      const message = value('message');
-      setError('message', message ? '' : 'Raccontaci in poche righe cosa vuoi cambiare.');
-      valid = Boolean(message);
+  };
+
+  const validate = () => {
+    const problem = value('problem');
+    const message = value('message');
+    const name = value('name');
+    const email = value('email');
+    const website = value('website');
+    const emailValid = !email || /^\S+@\S+\.\S+$/.test(email);
+    let websiteValid = true;
+    if (website) {
+      try { new URL(website); } catch { websiteValid = false; }
     }
-    if (index === 2) {
-      const name = value('name');
-      const phone = value('phone');
-      const email = value('email');
-      const preference = value('preference');
-      setError('name', name ? '' : 'Inserisci il tuo nome.');
-      setError('phone', phone ? '' : 'Inserisci un numero di telefono.');
-      setError('email', email && !/^\S+@\S+\.\S+$/.test(email) ? 'Controlla l’indirizzo email.' : '');
-      setError('preference', preference ? '' : 'Scegli come preferisci essere ricontattato.');
-      valid = Boolean(name && phone && preference && (!email || /^\S+@\S+\.\S+$/.test(email)));
+
+    setError('problem', problem ? '' : 'Scegli la priorità che si avvicina di più.');
+    setError('message', message ? '' : 'Raccontaci in poche righe cosa vuoi cambiare.');
+    setError('name', name ? '' : 'Inserisci il tuo nome.');
+    setError('email', emailValid ? '' : 'Controlla l’indirizzo email.');
+    setError('website', websiteValid ? '' : 'Inserisci un indirizzo completo, per esempio https://example.it.');
+
+    const valid = Boolean(problem && message && name && emailValid && websiteValid);
+    if (!valid) {
+      setState('error', 'Controlla i campi evidenziati: ciò che hai già scritto resta qui.');
+      const firstInvalid = form.querySelector('[aria-invalid="true"]');
+      firstInvalid?.focus({ preventScroll: false });
     }
     return valid;
   };
 
-  const updateSummary = () => {
-    const summary = intake.querySelector('[data-intake-summary]');
-    if (!summary) return;
-    const problem = value('problem') || '—';
-    const company = value('company') || '—';
-    const timing = value('timing') || 'Da definire insieme';
-    summary.innerHTML = `<div><span>Priorità</span><strong>${escapeHtml(problem)}</strong></div><div><span>Progetto</span><strong>${escapeHtml(company)}</strong></div><div><span>Timing</span><strong>${escapeHtml(timing)}</strong></div>`;
-  };
-
-  const escapeHtml = text => String(text).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
-
-  nextButtons.forEach(button => button.addEventListener('click', () => {
-    if (!validateStep(current)) return;
-    showStep(current + 1);
-  }));
-  backButtons.forEach(button => button.addEventListener('click', () => showStep(current - 1)));
-  form.addEventListener('change', updateSummary);
   form.addEventListener('input', event => {
     const name = event.target?.name;
     if (name) setError(name, '');
-    updateSummary();
+    if (form.dataset.state === 'error') setState('idle', '');
+  });
+  form.addEventListener('change', event => {
+    const name = event.target?.name;
+    if (name) setError(name, '');
+    if (form.dataset.state === 'error') setState('idle', '');
   });
 
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (!validateStep(2)) return;
-    const data = new FormData(form);
+    if (submitting) return;
+    if (!validate()) return;
+
+    submitting = true;
+    setState('submitting', 'Sto preparando un messaggio ordinato con il contesto che hai scritto…');
+
     const lines = [
-      'Ciao Axante, vorrei richiedere un primo audit del mio progetto.',
+      'Ciao Axante, vorrei parlarvi di un problema del mio progetto.',
       '',
       `Priorità: ${value('problem')}`,
+      `Contesto: ${value('message')}`,
       value('company') ? `Azienda/progetto: ${value('company')}` : '',
       value('website') ? `Sito attuale: ${value('website')}` : '',
-      `Problema/obiettivo: ${value('message')}`,
-      value('timing') ? `Timing indicativo: ${value('timing')}` : '',
       '',
       `Nome: ${value('name')}`,
-      `Telefono: ${value('phone')}`,
-      value('email') ? `Email: ${value('email')}` : '',
-      `Preferenza di contatto: ${value('preference')}`
+      value('email') ? `Email: ${value('email')}` : ''
     ].filter(Boolean);
-    if (status) status.textContent = 'Apro WhatsApp con il brief già ordinato…';
-    window.open(`https://wa.me/393271706981?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener,noreferrer');
+
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    try {
+      const popup = window.open(`https://wa.me/393271706981?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener,noreferrer');
+      if (!popup) throw new Error('popup-blocked');
+      setState('success', 'Messaggio pronto in WhatsApp. Puoi rileggerlo e modificarlo prima di inviarlo.');
+    } catch {
+      setState('error', 'Non siamo riusciti ad aprire WhatsApp. Usa il link diretto qui sotto o scrivici a hello@axante.it.');
+    } finally {
+      submitting = false;
+      if (submit) {
+        submit.disabled = false;
+        submit.setAttribute('aria-busy', 'false');
+      }
+    }
   });
 
-  showStep(0);
+  setState('idle', '');
 })();
