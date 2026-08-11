@@ -87,10 +87,15 @@ if (!homeHtml.includes('/home-reactor.css?v=15.1') || !homeHtml.includes('/home-
 if (!homeHtml.includes('Il deliverable viene dopo.')) failures.push('Homepage is missing proof-led editorial bridge copy');
 
 const servicesHtml = fs.existsSync(path.join(root,'servizi','index.html')) ? fs.readFileSync(path.join(root,'servizi','index.html'),'utf8') : '';
-if (!servicesHtml.includes('Service Proof Spine') || !servicesHtml.includes('data-service-proof')) failures.push('Services page missing Service Proof Spine v16');
-if (!servicesHtml.includes('/servizi-premium.css?v=16.0') || !servicesHtml.includes('/servizi-premium.js?v=16.0')) failures.push('Services page missing v16 assets');
+for (const token of ['Partiamo dal problema','problem-field','data-service-proof','Output osservabile','system-orchestra','capability-index']) {
+  if (!servicesHtml.includes(token)) failures.push(`Services page missing Decision Journey v17 marker/content: ${token}`);
+}
+if (!servicesHtml.includes('/servizi-premium.css?v=17.0') || !servicesHtml.includes('/servizi-premium.js?v=17.0')) failures.push('Services page missing v17 assets');
 for (const name of serviceDisplayAssets) if (!servicesHtml.includes(`/assets/media/${name}`)) failures.push(`Services proof missing displayed asset ${name}`);
 if ((servicesHtml.match(/data-proof-panel/g)||[]).length !== 3) failures.push('Services page must contain exactly 3 proof panels');
+if ((servicesHtml.match(/class="problem-track"/g)||[]).length !== 4) failures.push('Services page must contain exactly 4 problem tracks');
+if ((servicesHtml.match(/class="system-line"/g)||[]).length !== 5) failures.push('Services page must contain exactly 5 orchestration lines');
+for (const href of ['/portfolio#casarossa','/portfolio#unicart','/portfolio#carabetta','/contatti']) if (!servicesHtml.includes(`href="${href}"`)) failures.push(`Services page missing contextual proof/conversion link ${href}`);
 
 const reactorJs = fs.existsSync(path.join(root,'home-reactor.js')) ? fs.readFileSync(path.join(root,'home-reactor.js'),'utf8') : '';
 if (/setTimeout\s*\(/.test(reactorJs)) failures.push('home-reactor.js: timer-based transition logic survived');
@@ -134,4 +139,4 @@ if (fs.existsSync(socialPath)) {
 }
 
 if (failures.length) { console.error('\nSITE QA FAILED'); failures.forEach(f=>console.error(`- ${f}`)); process.exit(1); }
-console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, Reactor v15.1 editorial proof, Service Proof Spine v16, foundation 13.1 and ${principalRoutes.length} principal routes verified.`);
+console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, Reactor v15.1 editorial proof, Services Decision Journey v17, foundation 13.1 and ${principalRoutes.length} principal routes verified.`);
