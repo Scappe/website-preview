@@ -5,9 +5,9 @@ const root = process.cwd();
 const siteRoot = path.join(root, 'site');
 const repoAssetsRoot = path.join(root, 'assets');
 const CANONICAL_LOGO = '/assets/media/axante-logo.png';
-const FOUNDATION_VERSION = '13.1';
+const FOUNDATION_VERSION = '13.2';
 const mobileHotfixSource = path.join(root, 'foundation-mobile-hotfix.css');
-const mobileHotfixHref = '/foundation-mobile-hotfix.css?v=13.1';
+const mobileHotfixHref = '/foundation-mobile-hotfix.css?v=13.2';
 
 if (!fs.existsSync(siteRoot)) throw new Error('site directory is missing');
 if (!fs.existsSync(path.join(siteRoot, 'assets', 'media', 'axante-logo.png'))) {
@@ -15,6 +15,16 @@ if (!fs.existsSync(path.join(siteRoot, 'assets', 'media', 'axante-logo.png'))) {
 }
 if (!fs.existsSync(mobileHotfixSource)) throw new Error('foundation-mobile-hotfix.css is missing');
 fs.copyFileSync(mobileHotfixSource, path.join(siteRoot, 'foundation-mobile-hotfix.css'));
+
+// Foundation is the final owner of shared runtime resources. Strip legacy external font
+// imports here, after route-specific visual passes, so no earlier enhancement owns this policy.
+for (const stylesheet of ['styles.css', 'home-v5.css']) {
+  const stylesheetPath = path.join(siteRoot, stylesheet);
+  if (!fs.existsSync(stylesheetPath)) continue;
+  const sourceStyles = fs.readFileSync(stylesheetPath, 'utf8');
+  const stableStyles = sourceStyles.replace(/^\s*@import\s+url\(['"]https:\/\/fonts\.googleapis\.com\/[^\n]+\);?\s*/i, '');
+  if (stableStyles !== sourceStyles) fs.writeFileSync(stylesheetPath, stableStyles);
+}
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -137,4 +147,4 @@ const manifest = {
 fs.mkdirSync(path.join(siteRoot, 'assets'), { recursive: true });
 fs.writeFileSync(path.join(siteRoot, 'assets', 'asset-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
-console.log(`Foundation v${FOUNDATION_VERSION}: normalized ${normalized}/${htmlFiles.length} HTML pages; catalogued ${manifestAssets.length} assets; mobile foundation hardened.`);
+console.log(`Foundation v${FOUNDATION_VERSION}: normalized ${normalized}/${htmlFiles.length} HTML pages; catalogued ${manifestAssets.length} assets; globals/resources owned and mobile foundation hardened.`);
