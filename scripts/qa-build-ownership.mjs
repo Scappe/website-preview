@@ -30,6 +30,8 @@ if (fs.existsSync(manifestPath)) {
 const requiredFamilies = [
   'global-header-footer-logo',
   'typography-runtime-resources',
+  'home-proof-spine',
+  'home-decision-room',
   'home-signature-reactor',
   'search-surface',
   'published-output'
@@ -75,6 +77,12 @@ const order = [
 ].map(stage => build.indexOf(stage));
 for (let i = 1; i < order.length; i += 1) if (order[i] <= order[i - 1]) fail('final build ownership stages are out of order');
 
+// Superseded passes are allowed to remain in repository history, but they may not
+// re-enter the canonical build and reclaim a component already owned downstream.
+for (const superseded of manifest?.families?.['home-signature-reactor']?.superseded || []) {
+  if (build.includes(superseded)) fail(`superseded Home stage re-entered canonical build: ${superseded}`);
+}
+
 const earlyOverride = read('scripts/apply-v5-overrides.mjs');
 if (/fonts\.(?:googleapis|gstatic)\.com/i.test(earlyOverride)) fail('apply-v5-overrides.mjs still owns external font policy');
 const foundation = read('scripts/apply-foundation-v13.mjs');
@@ -87,10 +95,19 @@ for (const file of walk(distRoot).filter(file => /\.(?:html|css|js)$/.test(file)
   for (const pattern of forbidden) if (pattern.test(source)) fail(`${path.relative(distRoot, file)}: forbidden runtime font dependency survived publication`);
 }
 
+const homeOutput = path.join(distRoot, 'index.html');
+if (fs.existsSync(homeOutput)) {
+  const home = fs.readFileSync(homeOutput, 'utf8');
+  for (const legacy of ['/home-evidence.css', '/home-evidence.js', 'class="evidence-hero"', 'class="evidence-bridge"']) {
+    if (home.includes(legacy)) fail(`Home final output still exposes superseded Evidence ownership: ${legacy}`);
+  }
+  if (!home.includes('data-reactor')) fail('Home final output is missing Reactor owner marker');
+}
+
 if (failures.length) {
   console.error('\nBUILD OWNERSHIP QA FAILED');
   failures.forEach(item => console.error(`- ${item}`));
   process.exit(1);
 }
 
-console.log('BUILD OWNERSHIP QA PASSED: final globals/resources, Home Reactor, search surface and published output have explicit owners; no external font dependency survived.');
+console.log('BUILD OWNERSHIP QA PASSED: final globals/resources, Home chapter owners, Reactor hero, search surface and published output have explicit ownership; superseded Home Evidence cannot re-enter the build; no external font dependency survived.');
