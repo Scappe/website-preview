@@ -5,19 +5,17 @@ const root = process.cwd();
 const site = path.join(root, 'site');
 const htmlSource = path.join(root, 'chi-siamo.html');
 const cssSource = path.join(root, 'about-operating.css');
-const jsSource = path.join(root, 'about-operating.js');
 const socialImageUrl = 'https://website-preview-murex.vercel.app/assets/media/axante-share-v1.png';
 
-for (const file of [htmlSource, cssSource, jsSource]) {
-  if (!fs.existsSync(file)) throw new Error(`Missing about operating source: ${path.basename(file)}`);
+for (const file of [htmlSource, cssSource]) {
+  if (!fs.existsSync(file)) throw new Error(`Missing about source: ${path.basename(file)}`);
 }
 
 let html = fs.readFileSync(htmlSource, 'utf8');
 const replacements = [
   ['href="styles.css"', 'href="/styles.css"'],
-  ['href="about-operating.css"', 'href="/about-operating.css?v=8.0"'],
+  ['href="about-operating.css"', 'href="/about-operating.css?v=9.0"'],
   ['src="script.js"', 'src="/script.js"'],
-  ['src="about-operating.js"', 'src="/about-operating.js?v=8.0"'],
   ['href="index.html"', 'href="/"'],
   ['href="servizi.html#web"', 'href="/servizi#web"'],
   ['href="servizi.html#marketing"', 'href="/servizi#marketing"'],
@@ -39,23 +37,23 @@ const aboutDir = path.join(site, 'chi-siamo');
 fs.mkdirSync(aboutDir, { recursive: true });
 fs.writeFileSync(path.join(aboutDir, 'index.html'), html);
 fs.copyFileSync(cssSource, path.join(site, 'about-operating.css'));
-fs.copyFileSync(jsSource, path.join(site, 'about-operating.js'));
 
 const checks = [
-  'Cinque competenze.',
-  'data-operating-room',
+  'Il progetto resta uno.',
+  'class="process-story"',
+  'class="proof-stage"',
   'Prima il problema, poi il servizio.',
   'Dopo il lancio non spariamo.',
   'Daniele', 'Bianca', 'Gabriele', 'Lisa', 'Pietro',
-  '/about-operating.css?v=8.0',
-  '/about-operating.js?v=8.0',
-  'href="/servizi#web"',
-  'href="/servizi#development"',
+  '/about-operating.css?v=9.0',
+  'href="/servizi"',
+  'href="/portfolio"',
+  'href="/contatti"',
   socialImageUrl,
   'summary_large_image'
 ];
 for (const check of checks) {
-  if (!html.includes(check)) throw new Error(`About operating story missing required content: ${check}`);
+  if (!html.includes(check)) throw new Error(`About human studio story missing required content: ${check}`);
 }
 
-console.log('Applied Axante Studio Operating Story v8.0.');
+console.log('Applied Axante Human Studio Story v9.0 through the existing about build layer.');
