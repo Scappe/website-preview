@@ -14,13 +14,14 @@ const replacements = new Map([
   ['https://www.axante.it/wp-content/uploads/2021/08/tda.jpg', '/assets/media/tda.jpg']
 ]);
 
-// Interior routes share site/styles.css. Keep typography deterministic and self-contained:
-// external Google Fonts have intermittently returned 404 in CI and are not required for layout.
-const sharedStylesPath = path.join(site, 'styles.css');
-if (fs.existsSync(sharedStylesPath)) {
-  const sharedStyles = fs.readFileSync(sharedStylesPath, 'utf8');
-  const stableStyles = sharedStyles.replace(/^\s*@import\s+url\(['"]https:\/\/fonts\.googleapis\.com\/[^\n]+\);?\s*/i, '');
-  if (stableStyles !== sharedStyles) fs.writeFileSync(sharedStylesPath, stableStyles);
+// Keep shipped typography deterministic and self-contained. These source stylesheets can
+// contain legacy Google Fonts imports; the final build must never depend on that network path.
+for (const stylesheet of ['styles.css', 'home-v5.css']) {
+  const stylesheetPath = path.join(site, stylesheet);
+  if (!fs.existsSync(stylesheetPath)) continue;
+  const sourceStyles = fs.readFileSync(stylesheetPath, 'utf8');
+  const stableStyles = sourceStyles.replace(/^\s*@import\s+url\(['"]https:\/\/fonts\.googleapis\.com\/[^\n]+\);?\s*/i, '');
+  if (stableStyles !== sourceStyles) fs.writeFileSync(stylesheetPath, stableStyles);
 }
 
 function escapeAttribute(value) {
