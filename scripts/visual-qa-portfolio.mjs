@@ -25,13 +25,30 @@ for (const [width,height] of viewports) {
   page.on('requestfailed', request => failedRequests.push(`${request.resourceType()} ${request.url()} ${request.failure()?.errorText || 'failed'}`));
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(250);
+
+  // Force below-fold proof media through the real lazy-loading path before full-page evidence.
+  for (const image of await page.locator('.case-visual img[loading="lazy"]').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate(el => el.complete ? Promise.resolve() : new Promise(resolve => {
+      el.addEventListener('load', resolve, { once:true });
+      el.addEventListener('error', resolve, { once:true });
+    }));
+  }
+  await page.evaluate(() => window.scrollTo({ top:0, behavior:'instant' }));
+  await page.waitForTimeout(120);
+
   const metrics = await page.evaluate(() => {
     const rect = el => el?.getBoundingClientRect();
     const overlaps = (a,b) => a && b && a.left < b.right - 2 && a.right > b.left + 2 && a.top < b.bottom - 2 && a.bottom > b.top + 2;
     const keyTargets = [...document.querySelectorAll('.portfolio-hero-actions a,.case-links a,.portfolio-conversion-panel a,.menu-toggle')]
       .filter(el => { const r=rect(el); return r && r.width > 0 && r.height > 0; });
     const clipped = [...document.querySelectorAll('.portfolio-story h1,.portfolio-story h2,.portfolio-story p,.portfolio-story a,.portfolio-story figcaption')]
-      .filter(el => el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2).length;
+      .filter(el => {
+        const style = getComputedStyle(el);
+        const clipsX = /hidden|clip|auto|scroll/.test(style.overflowX);
+        const clipsY = /hidden|clip|auto|scroll/.test(style.overflowY);
+        return (clipsX && el.scrollWidth > el.clientWidth + 2) || (clipsY && el.scrollHeight > el.clientHeight + 2);
+      }).length;
     const chapters = [...document.querySelectorAll('[data-case-chapter]')];
     const desktopCollisions = innerWidth >= 1366 ? chapters.filter(chapter => {
       const visual = rect(chapter.querySelector('.case-visual'));
@@ -39,6 +56,7 @@ for (const [width,height] of viewports) {
       return overlaps(visual, copy);
     }).length : 0;
     const feature = rect(document.querySelector('.portfolio-hero-feature'));
+    const unloadedProof = [...document.querySelectorAll('.case-visual img')].filter(img => !img.complete || img.naturalWidth === 0).length;
     return {
       scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
       clientWidth: document.documentElement.clientWidth,
@@ -51,9 +69,10 @@ for (const [width,height] of viewports) {
       caseLabels: [...document.querySelectorAll('.case-number span')].map(el => el.textContent?.trim() || ''),
       cta: document.querySelector('.portfolio-conversion-panel')?.textContent || '',
       featureVisibleEarly: Boolean(feature && feature.width >= 200 && feature.height >= 120 && feature.top < innerHeight),
-      smallTargets: keyTargets.filter(el => { const r=rect(el); return r.width < 44 || r.height < 44; }).length,
+      smallTargets: keyTargets.filter(el => { const r=rect(el); return r.width < 44 || r.height < 44; }).map(el => `${el.className || el.tagName}:${el.textContent?.trim().slice(0,40)}`),
       clipped,
-      desktopCollisions
+      desktopCollisions,
+      unloadedProof
     };
   });
   if (metrics.scrollWidth > metrics.clientWidth + 2) failures.push(`${width}x${height}: overflow ${metrics.scrollWidth}>${metrics.clientWidth}`);
@@ -64,9 +83,10 @@ for (const [width,height] of viewports) {
   if (!metrics.featureVisibleEarly) failures.push(`${width}x${height}: real project proof is not visible in the first viewport`);
   if (metrics.archiveCards < 2) failures.push(`${width}x${height}: selected archive incomplete`);
   if (!metrics.cta.includes('Portaci il problema')) failures.push(`${width}x${height}: contextual conversion bridge missing`);
-  if (width <= 1024 && metrics.smallTargets) failures.push(`${width}x${height}: ${metrics.smallTargets} key touch targets below 44px`);
-  if (metrics.clipped) failures.push(`${width}x${height}: ${metrics.clipped} key copy/CTA elements internally clipped`);
+  if (width <= 1024 && metrics.smallTargets.length) failures.push(`${width}x${height}: key touch targets below 44px: ${metrics.smallTargets.join(' | ')}`);
+  if (metrics.clipped) failures.push(`${width}x${height}: ${metrics.clipped} genuinely clipped copy/CTA elements`);
   if (metrics.desktopCollisions) failures.push(`${width}x${height}: ${metrics.desktopCollisions} case media/copy collisions`);
+  if (metrics.unloadedProof) failures.push(`${width}x${height}: ${metrics.unloadedProof} proof images failed to load`);
   if (badResponses.length) failures.push(`${width}x${height}: HTTP failures ${[...new Set(badResponses)].join(' | ')}`);
   if (failedRequests.length) failures.push(`${width}x${height}: request failures ${[...new Set(failedRequests)].join(' | ')}`);
   const nonNetworkErrors = errors.filter(error => !/Failed to load resource: the server responded with a status of 404/i.test(error));
@@ -88,4 +108,4 @@ for (const [width,height] of [[390,844],[1366,768]]) {
 }
 await browser.close();
 if (failures.length) { console.error('PORTFOLIO VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
-console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, collision/clipping/touch checks, keyboard focus and reduced-motion.`);
+console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, real lazy proof assets, collision/clipping/touch checks, keyboard focus and reduced-motion.`);
