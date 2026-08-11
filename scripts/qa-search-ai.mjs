@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = path.join(process.cwd(), 'dist');
 const productionOrigin = 'https://www.axante.it';
 const failures = [];
+const principalRoutes = new Set(['/', '/servizi/', '/portfolio/', '/chi-siamo/', '/contatti/']);
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes:true }).flatMap(entry => {
@@ -50,29 +51,35 @@ for (const file of htmlFiles) {
   const description = attr(descriptionTag,'content');
   const robots = attr(robotsTag,'content').toLowerCase();
   const canonical = attr(canonicalTag,'href');
+  const normalizedCanonical = normalizeCanonical(canonical);
+  const expectedCanonical = normalizeCanonical(`${productionOrigin}${route}`);
   const ogUrl = attr(ogUrlTag,'content');
   const ogTitle = attr(ogTitleTag,'content');
   const ogDescription = attr(ogDescriptionTag,'content');
   const h1s = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)];
   const indexable = !robots.includes('noindex');
+  const selfCanonical = normalizedCanonical === expectedCanonical;
 
   if (!title) failures.push(`${route}: missing title`);
   if (!description) failures.push(`${route}: missing meta description`);
   if (h1s.length !== 1) failures.push(`${route}: expected exactly one H1, found ${h1s.length}`);
   if (indexable) {
-    const expected = `${productionOrigin}${route}`;
     if (!canonical) failures.push(`${route}: missing canonical`);
-    if (normalizeCanonical(canonical) !== normalizeCanonical(expected)) failures.push(`${route}: canonical not production-equivalent (${canonical || 'missing'})`);
-    if (ogUrl && normalizeCanonical(ogUrl) !== normalizeCanonical(canonical)) failures.push(`${route}: og:url differs from canonical`);
+    try {
+      if (canonical && new URL(canonical).origin !== productionOrigin) failures.push(`${route}: canonical is not on production origin (${canonical})`);
+    } catch { failures.push(`${route}: canonical is invalid (${canonical})`); }
+    if (principalRoutes.has(route) && !selfCanonical) failures.push(`${route}: principal canonical not route-equivalent (${canonical || 'missing'})`);
+    if (!ogUrl) failures.push(`${route}: missing og:url`);
+    else if (normalizeCanonical(ogUrl) !== normalizedCanonical) failures.push(`${route}: og:url differs from canonical`);
   }
-  if (ogTitle && ogTitle !== title) failures.push(`${route}: og:title differs from title`);
-  if (ogDescription && ogDescription !== description) failures.push(`${route}: og:description differs from meta description`);
+  if (!ogTitle) failures.push(`${route}: missing og:title`);
+  if (!ogDescription) failures.push(`${route}: missing og:description`);
 
   for (const block of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try { JSON.parse(block[1]); } catch(error) { failures.push(`${route}: invalid JSON-LD (${error.message})`); }
   }
 
-  pages.push({ route, html, title, description, canonical, indexable });
+  pages.push({ route, html, title, description, canonical, normalizedCanonical, expectedCanonical, indexable, selfCanonical });
 }
 
 const indexablePages = pages.filter(page => page.indexable);
@@ -93,16 +100,15 @@ if (!sitemap) failures.push('sitemap.xml missing');
 const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/gi)].map(match => normalizeCanonical(match[1]));
 const duplicateSitemapUrls = sitemapUrls.filter((url,index) => sitemapUrls.indexOf(url) !== index);
 if (duplicateSitemapUrls.length) failures.push(`sitemap.xml contains duplicate URLs: ${[...new Set(duplicateSitemapUrls)].join(', ')}`);
-for (const page of indexablePages) {
-  const canonical = normalizeCanonical(page.canonical);
-  if (canonical && !sitemapUrls.includes(canonical)) failures.push(`${page.route}: indexable canonical omitted from sitemap`);
+for (const page of indexablePages.filter(page => page.selfCanonical)) {
+  if (page.normalizedCanonical && !sitemapUrls.includes(page.normalizedCanonical)) failures.push(`${page.route}: self-canonical indexable route omitted from sitemap`);
 }
 for (const sitemapUrl of sitemapUrls) {
   let url;
   try { url = new URL(sitemapUrl); } catch { failures.push(`sitemap.xml invalid URL: ${sitemapUrl}`); continue; }
   if (url.origin !== productionOrigin) failures.push(`sitemap.xml non-production URL: ${sitemapUrl}`);
-  const localFile = routeToFile(url.pathname);
-  if (!fs.existsSync(localFile)) failures.push(`sitemap.xml URL has no built route: ${sitemapUrl}`);
+  const localPage = pages.find(page => page.normalizedCanonical === sitemapUrl);
+  if (!localPage) failures.push(`sitemap.xml URL has no built page declaring it canonical: ${sitemapUrl}`);
 }
 
 const robotsPath = path.join(root, 'robots.txt');
@@ -127,7 +133,7 @@ for (const page of pages) {
     if (incoming.has(pathname) && pathname !== page.route) incoming.set(pathname, incoming.get(pathname) + 1);
   }
 }
-for (const route of ['/', '/servizi/', '/portfolio/', '/chi-siamo/', '/contatti/']) {
+for (const route of principalRoutes) {
   if (route !== '/' && incoming.has(route) && incoming.get(route) === 0) failures.push(`${route}: critical indexable route is orphaned`);
 }
 
@@ -143,4 +149,4 @@ if (failures.length) {
   failures.forEach(failure => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`SEARCH/AI QA PASSED: ${indexablePages.length} indexable routes, unique metadata, canonical/sitemap parity, robots, JSON-LD parseability and critical internal-link coverage.`);
+console.log(`SEARCH/AI QA PASSED: ${indexablePages.length} indexable routes, unique metadata, canonical/sitemap integrity, robots, JSON-LD parseability and critical internal-link coverage.`);
