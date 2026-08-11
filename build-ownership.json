@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "policy": "Final-output ownership. Legacy passes may prepare intermediate markup but must not own final globals/resources.",
+  "families": {
+    "global-header-footer-logo": {
+      "owner": "scripts/apply-foundation-v13.mjs",
+      "stage": "foundation",
+      "outputs": ["site/**/*.html"]
+    },
+    "typography-runtime-resources": {
+      "owner": "scripts/apply-foundation-v13.mjs",
+      "stage": "foundation",
+      "outputs": ["site/styles.css", "site/home-v5.css", "site/foundation-mobile-hotfix.css"],
+      "forbidden": ["fonts.googleapis.com", "fonts.gstatic.com"]
+    },
+    "home-signature-reactor": {
+      "owner": "scripts/apply-home-reactor-v14.mjs",
+      "stage": "route-final",
+      "outputs": ["site/index.html", "site/home-reactor.css", "site/home-reactor.js"],
+      "supersedes": [
+        "scripts/apply-home-evidence-v9.mjs",
+        "scripts/apply-home-proof-spine-v10.mjs",
+        "scripts/apply-home-decision-room-v11-safe.mjs"
+      ],
+      "notes": "Legacy Home passes remain intermediate dependencies for now; Reactor is the only final owner."
+    },
+    "search-surface": {
+      "owner": "scripts/generate-search-surface.mjs",
+      "stage": "search-final",
+      "outputs": ["site/robots.txt", "site/sitemap.xml", "site/**/*.html metadata"]
+    },
+    "published-output": {
+      "owner": "scripts/publish-site.mjs",
+      "stage": "publish",
+      "outputs": ["dist/**"]
+    }
+  },
+  "buildOrder": [
+    "generate assets/base pages",
+    "legacy visual preparation passes",
+    "route-specific proof/service/contact/about/portfolio passes",
+    "foundation final globals/resources",
+    "home signature reactor final owner",
+    "search surface finalization",
+    "publish",
+    "site + ownership + search QA"
+  ]
+}
