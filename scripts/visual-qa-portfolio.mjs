@@ -107,5 +107,11 @@ for (const [width,height] of [[390,844],[1366,768]]) {
   await context.close();
 }
 await browser.close();
-if (failures.length) { console.error('PORTFOLIO VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
+if (failures.length) {
+  console.error('PORTFOLIO VISUAL QA FAILED');
+  failures.forEach(x=>console.error(`- ${x}`));
+  const annotation = failures.join(' | ').replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A');
+  console.log(`::error title=Portfolio visual QA::${annotation}`);
+  process.exit(1);
+}
 console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, real lazy proof assets, collision/clipping/touch checks, keyboard focus and reduced-motion.`);
