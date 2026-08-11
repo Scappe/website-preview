@@ -74,6 +74,8 @@ for (const file of htmlFiles) {
   }
   if (!ogTitle) failures.push(`${route}: missing og:title`);
   if (!ogDescription) failures.push(`${route}: missing og:description`);
+  if (ogTitle && title && ogTitle !== title) failures.push(`${route}: og:title differs from title`);
+  if (ogDescription && description && ogDescription !== description) failures.push(`${route}: og:description differs from meta description`);
 
   for (const block of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try { JSON.parse(block[1]); } catch(error) { failures.push(`${route}: invalid JSON-LD (${error.message})`); }
@@ -144,9 +146,19 @@ else {
   for (const href of ['/portfolio','/servizi','/contatti']) if (!about.html.includes(`href="${href}"`)) failures.push(`/chi-siamo/: missing descriptive internal path ${href}`);
 }
 
+const contact = pages.find(page => page.route === '/contatti/');
+if (!contact) failures.push('/contatti/: missing from built HTML corpus');
+else {
+  for (const phrase of ['Portaci ciò che','Tre cose ci bastano per iniziare bene.','Cosa succede dopo','Leggiamo il contesto.','Mettiamo a fuoco la priorità.','Definiamo il prossimo passo.']) {
+    if (!contact.html.includes(phrase)) failures.push(`/contatti/: essential static intent content missing: ${phrase}`);
+  }
+  if (!contact.html.includes('href="/portfolio"')) failures.push('/contatti/: missing descriptive proof path to /portfolio');
+  if (contact.html.includes('data-intake-step') || contact.html.includes('data-progress-segment')) failures.push('/contatti/: essential conversion content regressed to hidden wizard states');
+}
+
 if (failures.length) {
   console.error('\nSEARCH/AI QA FAILED');
   failures.forEach(failure => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`SEARCH/AI QA PASSED: ${indexablePages.length} indexable routes, unique metadata, canonical/sitemap integrity, robots, JSON-LD parseability and critical internal-link coverage.`);
+console.log(`SEARCH/AI QA PASSED: ${indexablePages.length} indexable routes, unique metadata, canonical/social/sitemap integrity, robots, JSON-LD parseability, static intent content and critical internal-link coverage.`);
