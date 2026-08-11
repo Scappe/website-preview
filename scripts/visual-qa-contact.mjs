@@ -86,6 +86,8 @@ for (const [width,height] of viewports) {
       if (smallInputs.length) failures.push(`${width}x${height}: mobile input font <16px ${smallInputs.map(x => `${x.name}=${x.size}`).join(' | ')}`);
     }
 
+    await page.screenshot({ path:path.join(out, `contact-${width}x${height}.png`), fullPage:true });
+
     const form = page.locator('form[data-project-intake]');
     await form.locator('[type="submit"]').click();
     const emptyErrors = await form.locator('.field-error').filter({ hasText:/\S/ }).count();
@@ -113,6 +115,7 @@ for (const [width,height] of viewports) {
     await page.waitForTimeout(120);
     const success = await form.evaluate(element => ({ state:element.dataset.state, calls:window.__contactOpenCalls.length, disabled:element.querySelector('[type="submit"]').disabled }));
     if (success.state !== 'success' || success.calls !== 1 || success.disabled) failures.push(`${width}x${height}: deterministic/double-submit state invalid ${JSON.stringify(success)}`);
+    if (width === 390) await page.screenshot({ path:path.join(out, 'contact-390x844-success.png'), fullPage:true });
 
     await page.evaluate(() => { window.open = () => null; });
     await form.locator('[type="submit"]').click();
@@ -120,13 +123,12 @@ for (const [width,height] of viewports) {
     const errorState = await form.getAttribute('data-state');
     if (errorState !== 'error') failures.push(`${width}x${height}: blocked-popup error state missing`);
     if ((await form.locator('#name').inputValue()) !== 'QA Axante') failures.push(`${width}x${height}: error state lost entered values`);
+    if (width === 390) await page.screenshot({ path:path.join(out, 'contact-390x844-error.png'), fullPage:true });
 
     if (badResponses.length) failures.push(`${width}x${height}: HTTP failures ${unique(badResponses).join(' | ')}`);
     if (failedRequests.length) failures.push(`${width}x${height}: request failures ${unique(failedRequests).join(' | ')}`);
     const nonNetworkErrors = errors.filter(error => !/Failed to load resource: the server responded with a status of 404/i.test(error));
     if (nonNetworkErrors.length) failures.push(`${width}x${height}: console/page errors ${unique(nonNetworkErrors).join(' | ')}`);
-
-    await page.screenshot({ path:path.join(out, `contact-${width}x${height}.png`), fullPage:true });
   } catch (error) {
     failures.push(`${width}x${height}: QA exception ${error.message.split('\n')[0]}`);
   }
@@ -152,4 +154,4 @@ if (failures.length) {
   failures.forEach(x => console.error(`::error title=Contact visual QA::${x}`));
   process.exit(1);
 }
-console.log(`CONTACT VISUAL QA PASSED: ${viewports.length} breakpoints, editorial geometry, invalid/success/error/double-submit and reduced-motion.`);
+console.log(`CONTACT VISUAL QA PASSED: ${viewports.length} breakpoints, clean screenshots, editorial geometry, invalid/success/error/double-submit and reduced-motion.`);
