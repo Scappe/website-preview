@@ -30,8 +30,6 @@
       panel.classList.toggle('is-active', on);
       panel.toggleAttribute('hidden', !on);
       panel.setAttribute('aria-hidden', String(!on));
-      // Author CSS gives every proof panel display:grid, so the semantic hidden
-      // attribute alone is not a sufficient geometry contract in every browser.
       panel.style.display = on ? '' : 'none';
       panel.style.opacity = '';
       panel.style.transform = '';
@@ -60,9 +58,6 @@
 
     const run = ++token;
     const committed = active;
-
-    // Reconcile any interrupted transition back to the last committed state first.
-    // This guarantees stale animation callbacks cannot leave ghost panels/classes behind.
     commitDesktopState(committed);
 
     if (index === committed) {
@@ -89,32 +84,33 @@
       return;
     }
 
-    const fromVisual = from.querySelector('.proof-visual');
-    const toVisual = to.querySelector('.proof-visual');
+    const fromMedia = from.querySelector('.proof-media');
+    const toMedia = to.querySelector('.proof-media');
     const fromCopy = from.querySelector('.proof-copy');
     const toCopy = to.querySelector('.proof-copy');
+
     const animations = [
       from.animate(
-        [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(-28px)' }],
-        { duration: 320, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
+        [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(-24px)' }],
+        { duration: 280, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
       ),
       to.animate(
-        [{ opacity: 0, transform: 'translateX(34px)' }, { opacity: 1, transform: 'translateX(0)' }],
-        { duration: 520, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'forwards' }
+        [{ opacity: 0, transform: 'translateX(30px)' }, { opacity: 1, transform: 'translateX(0)' }],
+        { duration: 500, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'forwards' }
       ),
-      toVisual?.animate(
-        [{ clipPath: 'inset(14% 18% 14% 18% round 28px)', transform: 'scale(.96)' }, { clipPath: 'inset(0 0 0 0 round 0)', transform: 'scale(1)' }],
-        { duration: 620, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
+      toMedia?.animate(
+        [{ clipPath: 'inset(8% 9% 8% 9%)', transform: 'scale(.975)' }, { clipPath: 'inset(0 0 0 0)', transform: 'scale(1)' }],
+        { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
       ),
       toCopy?.animate(
         [{ opacity: 0, transform: 'translateY(18px)' }, { opacity: 1, transform: 'translateY(0)' }],
-        { duration: 460, delay: 70, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
+        { duration: 430, delay: 60, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'both' }
       ),
-      fromVisual?.animate(
-        [{ clipPath: 'inset(0 0 0 0 round 0)', transform: 'scale(1)' }, { clipPath: 'inset(9% 13% 9% 13% round 24px)', transform: 'scale(.97)' }],
-        { duration: 350, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
+      fromMedia?.animate(
+        [{ clipPath: 'inset(0 0 0 0)', transform: 'scale(1)' }, { clipPath: 'inset(6% 7% 6% 7%)', transform: 'scale(.985)' }],
+        { duration: 300, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
       ),
-      fromCopy?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
+      fromCopy?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 210, fill: 'forwards' })
     ].filter(Boolean);
 
     await Promise.all(animations.map(animation => animation.finished.catch(() => null)));
