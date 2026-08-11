@@ -42,6 +42,16 @@ for (const [width,height] of viewports) {
     const overlaps = (a,b) => a && b && a.left < b.right - 2 && a.right > b.left + 2 && a.top < b.bottom - 2 && a.bottom > b.top + 2;
     const keyTargets = [...document.querySelectorAll('.portfolio-hero-actions a,.case-links a,.portfolio-conversion-panel a,.menu-toggle')]
       .filter(el => { const r=rect(el); return r && r.width > 0 && r.height > 0; });
+    const conversionTargets = [...document.querySelectorAll('.portfolio-conversion-panel .actions a')]
+      .map(el => rect(el)).filter(Boolean);
+    const crowdedConversionTargets = conversionTargets.some((a, index) => conversionTargets.slice(index + 1).some(b => {
+      if (overlaps(a, b)) return true;
+      const verticalOverlap = a.top < b.bottom && a.bottom > b.top;
+      const horizontalOverlap = a.left < b.right && a.right > b.left;
+      const horizontalGap = Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right));
+      const verticalGap = Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom));
+      return (verticalOverlap && horizontalGap < 8) || (horizontalOverlap && verticalGap < 8);
+    }));
     const clipped = [...document.querySelectorAll('.portfolio-story h1,.portfolio-story h2,.portfolio-story p,.portfolio-story a,.portfolio-story figcaption')]
       .filter(el => {
         const style = getComputedStyle(el);
@@ -70,6 +80,7 @@ for (const [width,height] of viewports) {
       cta: document.querySelector('.portfolio-conversion-panel')?.textContent || '',
       featureVisibleEarly: Boolean(feature && feature.width >= 200 && feature.height >= 120 && feature.top < innerHeight),
       smallTargets: keyTargets.filter(el => { const r=rect(el); return r.width < 44 || r.height < 44; }).map(el => `${el.className || el.tagName}:${el.textContent?.trim().slice(0,40)}`),
+      crowdedConversionTargets,
       clipped,
       desktopCollisions,
       unloadedProof
@@ -84,6 +95,7 @@ for (const [width,height] of viewports) {
   if (metrics.archiveCards < 2) failures.push(`${width}x${height}: selected archive incomplete`);
   if (!metrics.cta.includes('Portaci il problema')) failures.push(`${width}x${height}: contextual conversion bridge missing`);
   if (width <= 1024 && metrics.smallTargets.length) failures.push(`${width}x${height}: key touch targets below 44px: ${metrics.smallTargets.join(' | ')}`);
+  if (metrics.crowdedConversionTargets) failures.push(`${width}x${height}: conversion CTAs overlap or have less than 8px separation`);
   if (metrics.clipped) failures.push(`${width}x${height}: ${metrics.clipped} genuinely clipped copy/CTA elements`);
   if (metrics.desktopCollisions) failures.push(`${width}x${height}: ${metrics.desktopCollisions} case media/copy collisions`);
   if (metrics.unloadedProof) failures.push(`${width}x${height}: ${metrics.unloadedProof} proof images failed to load`);
@@ -114,4 +126,4 @@ if (failures.length) {
   console.log(`::error title=Portfolio visual QA::${annotation}`);
   process.exit(1);
 }
-console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, real lazy proof assets, collision/clipping/touch checks, keyboard focus and reduced-motion.`);
+console.log(`PORTFOLIO VISUAL QA PASSED: ${viewports.length} breakpoints, proof-first viewport, real lazy proof assets, collision/clipping/touch/separation checks, keyboard focus and reduced-motion.`);
