@@ -15,9 +15,9 @@ for (const file of [htmlSource, cssSource, jsSource]) {
 let html = fs.readFileSync(htmlSource, 'utf8');
 const replacements = [
   ['href="styles.css"', 'href="/styles.css"'],
-  ['href="contact-intake.css"', 'href="/contact-intake.css?v=7.0"'],
+  ['href="contact-intake.css"', 'href="/contact-intake.css?v=7.1"'],
   ['src="script.js"', 'src="/script.js"'],
-  ['src="contact-intake.js"', 'src="/contact-intake.js?v=7.0"'],
+  ['src="contact-intake.js"', 'src="/contact-intake.js?v=7.1"'],
   ['href="index.html"', 'href="/"'],
   ['href="servizi.html"', 'href="/servizi"'],
   ['href="portfolio.html"', 'href="/portfolio"'],
@@ -38,20 +38,23 @@ fs.copyFileSync(cssSource, path.join(site, 'contact-intake.css'));
 fs.copyFileSync(jsSource, path.join(site, 'contact-intake.js'));
 
 const checks = [
-  'Portaci il problema.',
+  'Portaci ciò che',
   'data-project-intake',
-  'Farmi trovare',
-  'Convincere meglio',
-  'Vendere di più',
-  'Lavorare meglio',
-  'Invia richiesta di audit',
-  '/contact-intake.css?v=7.0',
-  '/contact-intake.js?v=7.0',
+  'Tre cose ci bastano per iniziare bene.',
+  'Cosa succede dopo',
+  'Prepara il messaggio',
+  'Casa Rossa, Unicart e Carabetta',
+  'href="/portfolio"',
+  '/contact-intake.css?v=7.1',
+  '/contact-intake.js?v=7.1',
   socialImageUrl,
   'summary_large_image'
 ];
 for (const check of checks) {
   if (!html.includes(check)) throw new Error(`Contact intake missing required content: ${check}`);
 }
+if (html.includes('data-intake-step') || html.includes('data-progress-segment')) {
+  throw new Error('Contact source regressed to hidden multi-step wizard markup.');
+}
 
-console.log('Applied Axante Project Intake v7.0.');
+console.log('Applied Axante Project Intake v7.1 editorial flow.');
