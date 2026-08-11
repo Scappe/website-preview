@@ -14,16 +14,6 @@ const replacements = new Map([
   ['https://www.axante.it/wp-content/uploads/2021/08/tda.jpg', '/assets/media/tda.jpg']
 ]);
 
-// Keep shipped typography deterministic and self-contained. These source stylesheets can
-// contain legacy Google Fonts imports; the final build must never depend on that network path.
-for (const stylesheet of ['styles.css', 'home-v5.css']) {
-  const stylesheetPath = path.join(site, stylesheet);
-  if (!fs.existsSync(stylesheetPath)) continue;
-  const sourceStyles = fs.readFileSync(stylesheetPath, 'utf8');
-  const stableStyles = sourceStyles.replace(/^\s*@import\s+url\(['"]https:\/\/fonts\.googleapis\.com\/[^\n]+\);?\s*/i, '');
-  if (stableStyles !== sourceStyles) fs.writeFileSync(stylesheetPath, stableStyles);
-}
-
 function escapeAttribute(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
@@ -107,4 +97,4 @@ function walk(directory) {
 }
 
 walk(site);
-console.log('Applied Axante v6.3 local assets, deterministic typography, stable mobile behavior and branded social previews.');
+console.log('Applied Axante v6.3 local assets, stable mobile behavior and branded social previews.');
