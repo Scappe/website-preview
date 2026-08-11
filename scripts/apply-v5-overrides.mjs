@@ -14,6 +14,15 @@ const replacements = new Map([
   ['https://www.axante.it/wp-content/uploads/2021/08/tda.jpg', '/assets/media/tda.jpg']
 ]);
 
+// Interior routes share site/styles.css. Keep typography deterministic and self-contained:
+// external Google Fonts have intermittently returned 404 in CI and are not required for layout.
+const sharedStylesPath = path.join(site, 'styles.css');
+if (fs.existsSync(sharedStylesPath)) {
+  const sharedStyles = fs.readFileSync(sharedStylesPath, 'utf8');
+  const stableStyles = sharedStyles.replace(/^\s*@import\s+url\(['"]https:\/\/fonts\.googleapis\.com\/[^\n]+\);?\s*/i, '');
+  if (stableStyles !== sharedStyles) fs.writeFileSync(sharedStylesPath, stableStyles);
+}
+
 function escapeAttribute(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
@@ -97,4 +106,4 @@ function walk(directory) {
 }
 
 walk(site);
-console.log('Applied Axante v6.3 local assets, stable mobile behavior and branded social previews.');
+console.log('Applied Axante v6.3 local assets, deterministic typography, stable mobile behavior and branded social previews.');
