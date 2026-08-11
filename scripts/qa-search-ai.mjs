@@ -34,6 +34,11 @@ function routeToFile(route) {
   if (route === '/') return path.join(root, 'index.html');
   return path.join(root, route.replace(/^\//,'').replace(/\/$/,''), 'index.html');
 }
+function hasInternalHref(html, route, fragment = '') {
+  const escapedRoute = route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedFragment = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`href=["'](?:${escapedRoute.replace(/^\\\//, '\\/?')}|${escapedRoute.replace(/^\\\//, '')}\\.html)${escapedFragment ? `#${escapedFragment}` : ''}["']`, 'i').test(html);
+}
 
 const htmlFiles = walk(root).filter(file => file.endsWith('.html'));
 const pages = [];
@@ -142,6 +147,49 @@ if (!about) failures.push('/chi-siamo/: missing from built HTML corpus');
 else {
   for (const phrase of ['Axante è una squadra','Come lavoriamo','Le persone','Impegni operativi']) if (!about.html.includes(phrase)) failures.push(`/chi-siamo/: essential static content missing: ${phrase}`);
   for (const href of ['/portfolio','/servizi','/contatti']) if (!about.html.includes(`href="${href}"`)) failures.push(`/chi-siamo/: missing descriptive internal path ${href}`);
+}
+
+const services = pages.find(page => page.route === '/servizi/');
+if (!services) failures.push('/servizi/: missing from built HTML corpus');
+else {
+  const requiredIntentPhrases = [
+    'Partiamo dal problema.',
+    'Quattro problemi frequenti.',
+    'Farti trovare',
+    'Convincere meglio',
+    'Vendere online',
+    'Lavorare con meno attrito',
+    'Il lavoro reale',
+    'Una disciplina da sola raramente vede tutto il problema.',
+    'Strategia & consulenza digitale',
+    'Brand, grafica & contenuti',
+    'Web, UX/UI & e-commerce',
+    'SEO, advertising & growth',
+    'Development & automazioni',
+    'Non devi arrivare con il servizio giusto.'
+  ];
+  for (const phrase of requiredIntentPhrases) if (!services.html.includes(phrase)) failures.push(`/servizi/: essential static intent content missing: ${phrase}`);
+
+  const requiredProofPhrases = ['Casa Rossa','Unicart Auctions','Carabetta','Problema','Intervento','Output osservabile'];
+  for (const phrase of requiredProofPhrases) if (!services.html.includes(phrase)) failures.push(`/servizi/: essential static proof content missing: ${phrase}`);
+
+  const proofLabels = (services.html.match(/Output osservabile/g) || []).length;
+  const interventionLabels = (services.html.match(/<b>Intervento<\/b>/g) || []).length;
+  const problemLabels = (services.html.match(/<b>Problema<\/b>/g) || []).length;
+  const proofPanels = (services.html.match(/data-proof-panel/g) || []).length;
+  if (proofLabels < 3) failures.push(`/servizi/: expected observable-output proof for 3 principal cases, found ${proofLabels}`);
+  if (interventionLabels < 3) failures.push(`/servizi/: expected intervention layer for 3 principal cases, found ${interventionLabels}`);
+  if (problemLabels < 3) failures.push(`/servizi/: expected problem layer for 3 principal cases, found ${problemLabels}`);
+  if (proofPanels < 3) failures.push(`/servizi/: expected 3 static proof panels in initial HTML, found ${proofPanels}`);
+  if (!/Casa Rossa[\s\S]{0,16000}Unicart Auctions[\s\S]{0,16000}Carabetta/i.test(services.html)) failures.push('/servizi/: principal proof cases are not statically present in the intended narrative order');
+
+  for (const [route, fragment] of [['/portfolio','casarossa'],['/portfolio','unicart'],['/portfolio','carabetta']]) {
+    if (!hasInternalHref(services.html, route, fragment)) failures.push(`/servizi/: missing contextual proof path ${route}#${fragment}`);
+  }
+  if (!hasInternalHref(services.html, '/chi-siamo')) failures.push('/servizi/: missing contextual team path /chi-siamo');
+  if (!hasInternalHref(services.html, '/contatti')) failures.push('/servizi/: missing primary conversion path /contatti');
+  if (!hasInternalHref(services.html, '/portfolio')) failures.push('/servizi/: missing portfolio discovery path /portfolio');
+  if (/href=["']\/?portfolio\/(?:casa-rossa|unicart|carabetta)\/?["']/i.test(services.html)) failures.push('/servizi/: invented standalone case-study route linked from services');
 }
 
 const contact = pages.find(page => page.route === '/contatti/');
