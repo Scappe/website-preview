@@ -83,7 +83,8 @@ for (const [primary,detail] of [['casarossa.jpg','casarossa-detail.jpg'],['unica
   if (!homeHtml.includes(`/assets/media/${detail}`)) failures.push(`Reactor missing distinct detail asset ${detail}`);
 }
 if (homeHtml.includes('reactor-mobile-crop')) failures.push('Reactor legacy duplicated mobile crop survived build');
-if (!homeHtml.includes('/home-reactor.css?v=15.0') || !homeHtml.includes('/home-reactor.js?v=15.0')) failures.push('Homepage is missing Reactor v15 assets');
+if (!homeHtml.includes('/home-reactor.css?v=15.1') || !homeHtml.includes('/home-reactor.js?v=15.1')) failures.push('Homepage is missing Reactor v15.1 editorial assets');
+if (!homeHtml.includes('Il deliverable viene dopo.')) failures.push('Homepage is missing proof-led editorial bridge copy');
 
 const servicesHtml = fs.existsSync(path.join(root,'servizi','index.html')) ? fs.readFileSync(path.join(root,'servizi','index.html'),'utf8') : '';
 if (!servicesHtml.includes('Service Proof Spine') || !servicesHtml.includes('data-service-proof')) failures.push('Services page missing Service Proof Spine v16');
@@ -133,4 +134,4 @@ if (fs.existsSync(socialPath)) {
 }
 
 if (failures.length) { console.error('\nSITE QA FAILED'); failures.forEach(f=>console.error(`- ${f}`)); process.exit(1); }
-console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, Reactor v15, Service Proof Spine v16, foundation 13.1 and ${principalRoutes.length} principal routes verified.`);
+console.log(`SITE QA PASSED: ${htmlFiles.length} HTML pages, ${requiredFiles.length} critical files, Reactor v15.1 editorial proof, Service Proof Spine v16, foundation 13.1 and ${principalRoutes.length} principal routes verified.`);
