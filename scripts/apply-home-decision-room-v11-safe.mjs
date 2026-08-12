@@ -16,7 +16,10 @@ let html = fs.readFileSync(homePath, 'utf8');
 const source = fs.readFileSync(sourcePath, 'utf8');
 const markupMatch = source.match(/const decisionRoom = `([\s\S]*?)`;\n\nconst sections/);
 if (!markupMatch) throw new Error('Decision Room markup source not found.');
-const decisionRoom = markupMatch[1];
+// Desktop starts in the enhanced visual state before first paint so inactive tabpanels
+// never flash/overlap while JS attaches. Mobile CSS already expands every panel and
+// syncMode removes this class below 681px after hydration.
+const decisionRoom = markupMatch[1].replace('class="decision-room"', 'class="decision-room is-enhanced"');
 
 if (!html.includes('data-proof-spine')) throw new Error('Proof Spine missing before Decision Room transform.');
 
@@ -53,7 +56,7 @@ fs.writeFileSync(homePath, html);
 fs.copyFileSync(cssSource, path.join(site, 'home-decision-room.css'));
 fs.copyFileSync(jsSource, path.join(site, 'home-decision-room.js'));
 
-const required = ['data-proof-spine','data-decision-room','Problema','Direzione','Prototipo','Build','Release','Tracciati d’Arte','Francesco S.','Quattro dubbi','Portaci il problema.','/contatti','/chi-siamo'];
+const required = ['data-proof-spine','data-decision-room','class="decision-room is-enhanced"','Problema','Direzione','Prototipo','Build','Release','Tracciati d’Arte','Francesco S.','Quattro dubbi','Portaci il problema.','/contatti','/chi-siamo'];
 for (const token of required) if (!html.includes(token)) throw new Error(`Decision Room missing required token: ${token}`);
 for (const legacy of ['Metodo Axante','process-grid','testimonial-feature','Domande frequenti','Il prossimo progetto può funzionare meglio.','class="tp-section"','id="tp-styles"','id="tp-script"']) if (html.includes(legacy)) throw new Error(`Legacy lower-funnel token still present: ${legacy}`);
 
@@ -61,4 +64,4 @@ const proofIndex = html.indexOf('data-proof-spine');
 const decisionIndex = html.indexOf('data-decision-room');
 if (decisionIndex <= proofIndex) throw new Error('Decision Room is not positioned after Proof Spine.');
 
-console.log('Applied Axante Home Decision Room v11.2 from stable Proof Spine anchor.');
+console.log('Applied Axante Home Decision Room v11.3 from stable Proof Spine anchor.');
