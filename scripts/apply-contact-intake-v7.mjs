@@ -15,7 +15,7 @@ for (const file of [htmlSource, cssSource, jsSource]) {
 let html = fs.readFileSync(htmlSource, 'utf8');
 const replacements = [
   ['href="styles.css"', 'href="/styles.css"'],
-  ['href="contact-intake.css"', 'href="/contact-intake.css?v=7.1"'],
+  ['href="contact-intake.css"', 'href="/contact-intake.css?v=7.2"'],
   ['src="script.js"', 'src="/script.js"'],
   ['src="contact-intake.js"', 'src="/contact-intake.js?v=7.1"'],
   ['href="index.html"', 'href="/"'],
@@ -45,7 +45,7 @@ const checks = [
   'Prepara il messaggio',
   'Casa Rossa, Unicart e Carabetta',
   'href="/portfolio"',
-  '/contact-intake.css?v=7.1',
+  '/contact-intake.css?v=7.2',
   '/contact-intake.js?v=7.1',
   socialImageUrl,
   'summary_large_image'
@@ -57,4 +57,4 @@ if (html.includes('data-intake-step') || html.includes('data-progress-segment'))
   throw new Error('Contact source regressed to hidden multi-step wizard markup.');
 }
 
-console.log('Applied Axante Project Intake v7.1 editorial flow.');
+console.log('Applied Axante Project Intake v7.2 authored conversion scene.');
