@@ -5,7 +5,7 @@ const site = path.join(process.cwd(), 'site');
 const productionOrigin = 'https://www.axante.it';
 const meaningfulLastmod = new Map([
   ['https://www.axante.it/', '2026-07-19'],
-  ['https://www.axante.it/servizi/', '2026-07-19'],
+  ['https://www.axante.it/servizi/', '2026-08-11'],
   ['https://www.axante.it/portfolio/', '2026-08-12'],
   ['https://www.axante.it/chi-siamo/', '2026-08-12'],
   ['https://www.axante.it/contatti/', '2026-07-19'],
