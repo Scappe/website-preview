@@ -70,7 +70,7 @@ const main = `<main id="contenuto" class="portfolio-story">
   </article>
 </section>
 
-<section class="portfolio-principle" aria-labelledby="portfolio-principle-title"><div class="container portfolio-principle-grid"><span class="section-eyebrow">Il pattern dietro i casi</span><h2 id="portfolio-principle-title">Problema → decisione → sistema → prova.</h2><div><p>Il deliverable viene dopo. Prima capiamo cosa deve cambiare, quali vincoli contano e quale sistema può reggere nel tempo.</p><div class="portfolio-principle-links"><a href="/servizi">Vedi i problemi che affrontiamo <span>→</span></a><a href="/chi-siamo">Come prendiamo decisioni e lavoriamo <span>→</span></a></div></div></div></section>
+<section class="portfolio-principle" aria-labelledby="portfolio-principle-title"><div class="container portfolio-principle-grid"><span class="section-eyebrow">Il criterio dietro i casi</span><h2 id="portfolio-principle-title">Problema → decisione → sistema → prova.</h2><div><p>Il deliverable viene dopo. Prima capiamo cosa deve cambiare, quali vincoli contano e quale sistema può reggere nel tempo.</p><div class="portfolio-principle-links"><a href="/servizi">Vedi i problemi che affrontiamo <span>→</span></a><a href="/chi-siamo">Come prendiamo decisioni e lavoriamo <span>→</span></a></div></div></div></section>
 
 <section class="portfolio-conversion"><div class="container"><div class="portfolio-conversion-panel"><span class="section-eyebrow">Dal proof al tuo contesto</span><h2>Non serve avere già la soluzione.<br>Portaci il problema.</h2><p>Raccontaci cosa oggi non funziona, cosa vuoi rendere più semplice o dove il digitale non sta sostenendo il business.</p><div class="actions"><a class="btn btn-primary" href="/contatti">Raccontaci il problema <span>↗</span></a><a class="btn btn-secondary" href="/servizi">Esplora i servizi <span>→</span></a></div></div></div></section>
 </main>`;
@@ -90,7 +90,7 @@ fs.writeFileSync(pagePath, html);
 fs.copyFileSync(cssSource, path.join(site, 'portfolio-case-gallery.css'));
 fs.copyFileSync(jsSource, path.join(site, 'portfolio-case-gallery.js'));
 
-const required = ['Proof, non vetrina','Problemi reali.','Casa Rossa','Unicart Auctions','Carabetta','Decisione Axante','Prova osservabile','Il pattern dietro i casi','/chi-siamo','/portfolio-case-gallery.css?v=12.2'];
+const required = ['Proof, non vetrina','Problemi reali.','Casa Rossa','Unicart Auctions','Carabetta','Decisione Axante','Prova osservabile','Il criterio dietro i casi','/chi-siamo','/portfolio-case-gallery.css?v=12.2'];
 for (const token of required) if (!html.includes(token)) throw new Error(`Portfolio v12.2 missing token: ${token}`);
 for (const legacy of ['selected-archive','archive-card','portfolio-grid','Il prossimo case study']) if (html.includes(legacy)) throw new Error(`Legacy portfolio token still present: ${legacy}`);
 console.log('Applied Axante Portfolio Case Chapters v12.2.');
