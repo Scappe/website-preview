@@ -16,8 +16,12 @@
       const on = i === active;
       tab.setAttribute('aria-selected', String(on));
       tab.tabIndex = on ? 0 : -1;
-      panels[i]?.classList.toggle('is-active', on);
-      panels[i]?.setAttribute('aria-hidden', mqDesktop.matches ? String(!on) : 'false');
+      const panel = panels[i];
+      if (panel) {
+        panel.classList.toggle('is-active', on);
+        panel.hidden = mqDesktop.matches && !on;
+        panel.setAttribute('aria-hidden', mqDesktop.matches ? String(!on) : 'false');
+      }
     });
     if (moveFocus) tabs[active]?.focus({ preventScroll: true });
   };
@@ -29,7 +33,10 @@
     } else {
       root.classList.remove('is-enhanced');
       tabs.forEach(tab => { tab.tabIndex = 0; });
-      panels.forEach(panel => panel.setAttribute('aria-hidden', 'false'));
+      panels.forEach(panel => {
+        panel.hidden = false;
+        panel.setAttribute('aria-hidden', 'false');
+      });
     }
   };
 
