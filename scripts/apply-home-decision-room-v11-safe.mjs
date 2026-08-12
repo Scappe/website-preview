@@ -21,15 +21,23 @@ const decisionRoom = markupMatch[1];
 if (!html.includes('data-proof-spine')) throw new Error('Proof Spine missing before Decision Room transform.');
 
 // Remove whatever legacy lower-funnel variants survived the previous build steps.
+// Trust Proof v5 is fully superseded here: Decision Room already owns delivery proof,
+// objections and conversion, so retaining it would duplicate the funnel and reserve
+// a large content-visibility intrinsic block after the final CTA.
 const sections = /<section\b[^>]*>[\s\S]*?<\/section>/g;
 html = html.replace(sections, section => {
   if (section.includes('data-proof-spine')) return section;
+  if (section.includes('class="tp-section"')) return '';
   if (section.includes('Metodo Axante') || section.includes('process-grid') || section.includes('process-section')) return '';
   if (section.includes('testimonial-feature') || section.includes('testimonial-layout') || section.includes('class="testimonials"') || section.includes('Recensioni')) return '';
   if (section.includes('Domande frequenti') || section.includes('faq-list') || section.includes('class="faq"')) return '';
   if (section.includes('Il prossimo progetto può funzionare meglio.') || section.includes('cta-panel')) return '';
   return section;
 });
+
+// Remove dead inline resources that belonged exclusively to the superseded Trust Proof v5 section.
+html = html.replace(/<style id="tp-styles">[\s\S]*?<\/style>/g, '');
+html = html.replace(/<script id="tp-script">[\s\S]*?<\/script>/g, '');
 
 // Insert directly after Proof Spine: this is the stable narrative anchor.
 const proofStart = html.indexOf('<section class="proof-spine"');
@@ -47,10 +55,10 @@ fs.copyFileSync(jsSource, path.join(site, 'home-decision-room.js'));
 
 const required = ['data-proof-spine','data-decision-room','Problema','Direzione','Prototipo','Build','Release','Tracciati d’Arte','Francesco S.','Quattro dubbi','Portaci il problema.','/contatti','/chi-siamo'];
 for (const token of required) if (!html.includes(token)) throw new Error(`Decision Room missing required token: ${token}`);
-for (const legacy of ['Metodo Axante','process-grid','testimonial-feature','Domande frequenti','Il prossimo progetto può funzionare meglio.']) if (html.includes(legacy)) throw new Error(`Legacy lower-funnel token still present: ${legacy}`);
+for (const legacy of ['Metodo Axante','process-grid','testimonial-feature','Domande frequenti','Il prossimo progetto può funzionare meglio.','class="tp-section"','id="tp-styles"','id="tp-script"']) if (html.includes(legacy)) throw new Error(`Legacy lower-funnel token still present: ${legacy}`);
 
 const proofIndex = html.indexOf('data-proof-spine');
 const decisionIndex = html.indexOf('data-decision-room');
 if (decisionIndex <= proofIndex) throw new Error('Decision Room is not positioned after Proof Spine.');
 
-console.log('Applied Axante Home Decision Room v11.1 from stable Proof Spine anchor.');
+console.log('Applied Axante Home Decision Room v11.2 from stable Proof Spine anchor.');
