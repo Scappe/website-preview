@@ -14,7 +14,7 @@ for (const file of [htmlSource, cssSource]) {
 let html = fs.readFileSync(htmlSource, 'utf8');
 const replacements = [
   ['href="styles.css"', 'href="/styles.css"'],
-  ['href="about-operating.css"', 'href="/about-operating.css?v=9.0"'],
+  ['href="about-operating.css"', 'href="/about-operating.css?v=10.0"'],
   ['src="script.js"', 'src="/script.js"'],
   ['href="index.html"', 'href="/"'],
   ['href="servizi.html#web"', 'href="/servizi#web"'],
@@ -39,13 +39,14 @@ fs.writeFileSync(path.join(aboutDir, 'index.html'), html);
 fs.copyFileSync(cssSource, path.join(site, 'about-operating.css'));
 
 const checks = [
-  'Il progetto resta uno.',
+  'Una squadra sola.',
+  'class="people-signal"',
   'class="process-story"',
   'class="proof-stage"',
   'Prima il problema, poi il servizio.',
   'Dopo il lancio non spariamo.',
   'Daniele', 'Bianca', 'Gabriele', 'Lisa', 'Pietro',
-  '/about-operating.css?v=9.0',
+  '/about-operating.css?v=10.0',
   'href="/servizi"',
   'href="/portfolio"',
   'href="/contatti"',
@@ -53,7 +54,7 @@ const checks = [
   'summary_large_image'
 ];
 for (const check of checks) {
-  if (!html.includes(check)) throw new Error(`About human studio story missing required content: ${check}`);
+  if (!html.includes(check)) throw new Error(`About people-led editorial story missing required content: ${check}`);
 }
 
-console.log('Applied Axante Human Studio Story v9.0 through the existing about build layer.');
+console.log('Applied Axante People-led Editorial Story v10.0 through the existing about build layer.');
