@@ -10,6 +10,13 @@
   const objections = Array.from(root.querySelectorAll('[data-objection-trigger]'));
   let active = 0;
 
+  const setPanelState = (panel, on) => {
+    panel.classList.toggle('is-active', on);
+    panel.hidden = mqDesktop.matches && !on;
+    panel.style.display = mqDesktop.matches && !on ? 'none' : '';
+    panel.setAttribute('aria-hidden', mqDesktop.matches ? String(!on) : 'false');
+  };
+
   const activate = (index, moveFocus = false) => {
     active = Math.max(0, Math.min(index, tabs.length - 1));
     tabs.forEach((tab, i) => {
@@ -17,11 +24,7 @@
       tab.setAttribute('aria-selected', String(on));
       tab.tabIndex = on ? 0 : -1;
       const panel = panels[i];
-      if (panel) {
-        panel.classList.toggle('is-active', on);
-        panel.hidden = mqDesktop.matches && !on;
-        panel.setAttribute('aria-hidden', mqDesktop.matches ? String(!on) : 'false');
-      }
+      if (panel) setPanelState(panel, on);
     });
     if (moveFocus) tabs[active]?.focus({ preventScroll: true });
   };
@@ -35,6 +38,7 @@
       tabs.forEach(tab => { tab.tabIndex = 0; });
       panels.forEach(panel => {
         panel.hidden = false;
+        panel.style.display = '';
         panel.setAttribute('aria-hidden', 'false');
       });
     }
