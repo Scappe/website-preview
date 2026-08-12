@@ -200,3 +200,18 @@
   .services-final .actions{display:grid}
   .services-final .btn{width:100%;min-height:48px}
 }
+
+@media(max-width:390px){
+  .services-hero-field{min-height:224px}
+  .proof-media{height:420px}
+  .proof-panel:nth-child(n+2) .proof-media{height:320px}
+  .proof-media-detail{width:46%;height:42%}
+  .proof-flow>div{grid-template-columns:82px minmax(0,1fr)}
+  .problem-track h3{font-size:1.85rem}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .proof-tab,.proof-tab:after,.capability-lines a{transition:none!important}
+  .hero-field-axis{transform:none}
+  .proof-panel,.proof-media,.proof-copy{animation:none!important;transition:none!important}
+}
