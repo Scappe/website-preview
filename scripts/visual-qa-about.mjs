@@ -27,6 +27,15 @@ for (const [width,height] of viewports) {
   try {
     await page.goto(url, { waitUntil:'networkidle' });
     await page.waitForTimeout(200);
+
+    // Proof media are intentionally lazy. Bring the proof stage into the viewport and
+    // wait for each image to finish before classifying naturalWidth=0 as a real failure.
+    const proofStage = page.locator('.proof-stage');
+    if (await proofStage.count()) {
+      await proofStage.scrollIntoViewIfNeeded();
+      await page.waitForFunction(() => [...document.querySelectorAll('.proof-stage img')].every(img => img.complete));
+    }
+
     const metrics = await page.evaluate(() => ({
       scrollWidth:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),
       clientWidth:document.documentElement.clientWidth,
@@ -38,9 +47,10 @@ for (const [width,height] of viewports) {
       commitments:document.querySelectorAll('.commitments .commitment').length,
       proofPieces:document.querySelectorAll('.proof-stage .proof-piece').length,
       localProofImages:[...document.querySelectorAll('.proof-stage img')].every(img => !/^https?:/i.test(img.getAttribute('src') || '')),
+      proofImagesDecoded:[...document.querySelectorAll('.proof-stage img')].every(img => img.complete && img.naturalWidth > 0),
       internalLinks:[...document.querySelectorAll('main a[href]')].map(a => a.getAttribute('href')),
       h1s:document.querySelectorAll('main h1').length,
-      brokenImages:[...document.images].filter(img => !img.complete || img.naturalWidth === 0).length,
+      brokenImages:[...document.images].filter(img => img.complete && img.naturalWidth === 0).length,
       staticPeopleReadable:[...document.querySelectorAll('.people-signal .hero-person,.team-list .person')].every(el => getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden')
     }));
     if (metrics.scrollWidth > metrics.clientWidth + 2) failures.push(`${width}x${height}: overflow ${metrics.scrollWidth}>${metrics.clientWidth}`);
@@ -50,10 +60,10 @@ for (const [width,height] of viewports) {
     if (metrics.processes !== 5) failures.push(`${width}x${height}: expected 5 process beats`);
     if (metrics.people !== 5) failures.push(`${width}x${height}: expected 5 team profiles`);
     if (metrics.commitments !== 4) failures.push(`${width}x${height}: expected 4 commitments`);
-    if (metrics.proofPieces < 3 || !metrics.localProofImages) failures.push(`${width}x${height}: proof stage invalid or hotlinked`);
+    if (metrics.proofPieces < 3 || !metrics.localProofImages || !metrics.proofImagesDecoded) failures.push(`${width}x${height}: proof stage invalid, hotlinked or failed to decode`);
     if (!metrics.staticPeopleReadable) failures.push(`${width}x${height}: people proof hidden by state`);
     if (metrics.h1s !== 1) failures.push(`${width}x${height}: expected one H1`);
-    if (metrics.brokenImages) failures.push(`${width}x${height}: ${metrics.brokenImages} broken images`);
+    if (metrics.brokenImages) failures.push(`${width}x${height}: ${metrics.brokenImages} genuinely broken loaded images`);
     for (const required of ['portfolio.html','servizi.html','contatti.html']) if (!metrics.internalLinks.some(href => href?.includes(required.replace('.html','')) || href === required)) failures.push(`${width}x${height}: missing internal link to ${required}`);
     if (badResponses.length) failures.push(`${width}x${height}: HTTP failures ${[...new Set(badResponses)].join(' | ')}`);
     if (failedRequests.length) failures.push(`${width}x${height}: request failures ${[...new Set(failedRequests)].join(' | ')}`);
@@ -103,4 +113,4 @@ if (failures.length) {
   failures.forEach(x => console.error(`::error title=About visual QA::${x}`));
   process.exit(1);
 }
-console.log(`ABOUT VISUAL QA PASSED: ${viewports.length} breakpoints, people-led scenes, local proof, geometry and reduced-motion.`);
+console.log(`ABOUT VISUAL QA PASSED: ${viewports.length} breakpoints, people-led scenes, decoded local proof, geometry and reduced-motion.`);
