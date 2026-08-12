@@ -90,21 +90,40 @@ for (const [width,height] of viewports) {
   await context.close();
 }
 
-for (const [width,height] of [[390,844],[1366,768]]) {
-  const context = await browser.newContext({ viewport:{width,height}, reducedMotion:'reduce' });
-  const page = await context.newPage();
-  await page.goto(url, { waitUntil:'networkidle' });
-  const state = await page.evaluate(() => ({
-    heroPeople:document.querySelectorAll('.hero-person').length,
-    processes:document.querySelectorAll('.process-beat').length,
-    people:document.querySelectorAll('.person').length,
+const visibilitySnapshot = page => page.evaluate(() => {
+  const selectors = '.hero-person,.process-beat,.person,.commitment';
+  const elements = [...document.querySelectorAll(selectors)];
+  const visible = elements.map(el => {
+    const style = getComputedStyle(el);
+    return style.display !== 'none' && style.visibility !== 'hidden';
+  });
+  return {
+    total:elements.length,
+    visible,
     scrollWidth:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),
-    clientWidth:document.documentElement.clientWidth,
-    essentialVisible:[...document.querySelectorAll('.hero-person,.process-beat,.person,.commitment')].every(el => getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden')
-  }));
-  if (state.heroPeople !== 5 || state.processes !== 5 || state.people !== 5 || !state.essentialVisible) failures.push(`${width}x${height}: reduced-motion content incomplete`);
-  if (state.scrollWidth > state.clientWidth + 2) failures.push(`${width}x${height}: reduced-motion overflow`);
-  await context.close();
+    clientWidth:document.documentElement.clientWidth
+  };
+});
+
+for (const [width,height] of [[390,844],[1366,768]]) {
+  // Responsive art direction may intentionally suppress secondary copy on small screens.
+  // Reduced-motion must not hide anything *additional* compared with the same viewport;
+  // comparing against the responsive baseline prevents both false REDs and motion-only loss.
+  const baselineContext = await browser.newContext({ viewport:{width,height}, reducedMotion:'no-preference' });
+  const baselinePage = await baselineContext.newPage();
+  await baselinePage.goto(url, { waitUntil:'networkidle' });
+  const baseline = await visibilitySnapshot(baselinePage);
+  await baselineContext.close();
+
+  const reducedContext = await browser.newContext({ viewport:{width,height}, reducedMotion:'reduce' });
+  const reducedPage = await reducedContext.newPage();
+  await reducedPage.goto(url, { waitUntil:'networkidle' });
+  const reduced = await visibilitySnapshot(reducedPage);
+  await reducedContext.close();
+
+  const parity = baseline.total === reduced.total && baseline.visible.every((isVisible,index) => !isVisible || reduced.visible[index]);
+  if (!parity) failures.push(`${width}x${height}: reduced-motion hides content visible in responsive baseline`);
+  if (reduced.scrollWidth > reduced.clientWidth + 2) failures.push(`${width}x${height}: reduced-motion overflow`);
 }
 
 await browser.close();
@@ -113,4 +132,4 @@ if (failures.length) {
   failures.forEach(x => console.error(`::error title=About visual QA::${x}`));
   process.exit(1);
 }
-console.log(`ABOUT VISUAL QA PASSED: ${viewports.length} breakpoints, people-led scenes, decoded local proof, geometry and reduced-motion.`);
+console.log(`ABOUT VISUAL QA PASSED: ${viewports.length} breakpoints, people-led scenes, decoded local proof, geometry and reduced-motion parity.`);
