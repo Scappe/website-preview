@@ -54,6 +54,10 @@ for (const [width,height] of viewports) {
       const inputFonts = [...document.querySelectorAll('.contact-form input,.contact-form textarea')]
         .filter(visible)
         .map(element => ({ name:element.name, size:parseFloat(getComputedStyle(element).fontSize) }));
+      const sceneBackgrounds = ['.contact-hero','.contact-conversation','.after-contact','.contact-proof','.direct-contact-section']
+        .map(selector => document.querySelector(selector))
+        .filter(Boolean)
+        .map(element => getComputedStyle(element).backgroundColor);
       return {
         scrollWidth:Math.max(root.scrollWidth, document.body.scrollWidth),
         clientWidth:root.clientWidth,
@@ -64,7 +68,7 @@ for (const [width,height] of viewports) {
         problems:document.querySelectorAll('input[name="problem"]').length,
         afterBeats:document.querySelectorAll('.after-flow article').length,
         portfolioLinks:[...document.querySelectorAll('a[href]')].filter(a => /portfolio/.test(a.getAttribute('href') || '')).length,
-        clipping,outside,targetHeights,inputFonts
+        clipping,outside,targetHeights,inputFonts,sceneBackgrounds
       };
     });
 
@@ -75,6 +79,7 @@ for (const [width,height] of viewports) {
     if (metrics.problems !== 5) failures.push(`${width}x${height}: expected 5 problem choices`);
     if (metrics.afterBeats !== 3) failures.push(`${width}x${height}: expected 3 static next-step beats`);
     if (!metrics.portfolioLinks) failures.push(`${width}x${height}: missing descriptive portfolio proof link`);
+    if (unique(metrics.sceneBackgrounds).length < 4) failures.push(`${width}x${height}: contact scene rhythm collapsed ${metrics.sceneBackgrounds.join(' | ')}`);
     if (metrics.clipping.length) failures.push(`${width}x${height}: horizontal text clipping ${metrics.clipping.join(' | ')}`);
     if (metrics.outside.length) failures.push(`${width}x${height}: interactive outside viewport ${metrics.outside.map(x => x.text).join(' | ')}`);
     if (width <= 1024) {
@@ -154,4 +159,4 @@ if (failures.length) {
   failures.forEach(x => console.error(`::error title=Contact visual QA::${x}`));
   process.exit(1);
 }
-console.log(`CONTACT VISUAL QA PASSED: ${viewports.length} breakpoints, clean screenshots, editorial geometry, invalid/success/error/double-submit and reduced-motion.`);
+console.log(`CONTACT VISUAL QA PASSED: ${viewports.length} breakpoints, clean screenshots, authored scene rhythm, editorial geometry, invalid/success/error/double-submit and reduced-motion.`);
