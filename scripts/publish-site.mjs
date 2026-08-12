@@ -11,13 +11,6 @@ const canonicalLogo = '/assets/media/axante-logo.png';
 const foundationMarker = 'data-global-component-version="13.1"';
 const fieldRoutes = ['/', '/servizi/', '/portfolio/', '/chi-siamo/', '/contatti/', '/lavora-con-noi/'];
 
-function parseVercelObservabilityConfig() {
-  const raw = process.env.VERCEL_OBSERVABILITY_CLIENT_CONFIG || '';
-  if (!raw) return null;
-  try { return JSON.parse(raw); }
-  catch { return null; }
-}
-
 function routeFile(route) {
   return route === '/'
     ? path.join(output, 'index.html')
@@ -25,32 +18,33 @@ function routeFile(route) {
 }
 
 function installFieldCwvInstrumentation() {
-  const config = parseVercelObservabilityConfig();
-  const speedInsights = config?.speedInsights || null;
-  const scriptSrc = typeof speedInsights?.scriptSrc === 'string' ? speedInsights.scriptSrc : '';
-  const endpoint = typeof speedInsights?.endpoint === 'string' ? speedInsights.endpoint : '';
-  const sameOriginScript = scriptSrc.startsWith('/') && !scriptSrc.startsWith('//');
-  const instrumentationActive = Boolean(sameOriginScript);
-  const marker = 'data-axante-field-cwv="vercel-speed-insights"';
+  const clientSource = path.join(root, 'field-cwv-client.js');
+  const vendorSource = path.join(root, 'node_modules', 'web-vitals', 'dist', 'web-vitals.js');
+  if (!fs.existsSync(clientSource)) throw new Error('field-cwv-client.js is missing.');
+  if (!fs.existsSync(vendorSource)) throw new Error('web-vitals vendor bundle is missing.');
 
-  if (instrumentationActive) {
-    const bootstrap = `<script ${marker}>window.si=window.si||function(){(window.siq=window.siq||[]).push(arguments);};</script><script defer ${marker} src="${scriptSrc}"></script>`;
-    for (const route of fieldRoutes) {
-      const file = routeFile(route);
-      if (!fs.existsSync(file)) continue;
-      const html = fs.readFileSync(file, 'utf8');
-      if (html.includes(marker)) continue;
-      if (!html.includes('</body>')) throw new Error(`${route}: unable to inject field CWV instrumentation before </body>`);
-      fs.writeFileSync(file, html.replace('</body>', `${bootstrap}</body>`));
-    }
+  const vendorOutput = path.join(output, 'assets', 'vendor');
+  fs.mkdirSync(vendorOutput, { recursive: true });
+  fs.copyFileSync(vendorSource, path.join(vendorOutput, 'web-vitals.js'));
+  fs.copyFileSync(clientSource, path.join(output, 'field-cwv-client.js'));
+
+  const marker = 'data-axante-field-cwv="axante-same-origin-rum"';
+  const bootstrap = `<script type="module" ${marker} src="/field-cwv-client.js?v=1.0"></script>`;
+  for (const route of fieldRoutes) {
+    const file = routeFile(route);
+    if (!fs.existsSync(file)) continue;
+    const html = fs.readFileSync(file, 'utf8');
+    if (html.includes(marker)) continue;
+    if (!html.includes('</body>')) throw new Error(`${route}: unable to inject field CWV instrumentation before </body>`);
+    fs.writeFileSync(file, html.replace('</body>', `${bootstrap}</body>`));
   }
 
   const evidence = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     kind: 'FIELD — EVIDENCE PIPELINE STATUS',
-    source: 'Vercel Speed Insights',
-    instrumentationStatus: instrumentationActive ? 'ACTIVE' : 'READY_CONFIG_REQUIRED',
+    source: 'Axante same-origin RUM using Google web-vitals',
+    instrumentationStatus: 'ACTIVE_CODE_PRESENT',
     fieldVerdict: 'INSUFFICIENT SAMPLE',
     fieldAndLabSeparated: true,
     thresholds: {
@@ -63,8 +57,8 @@ function installFieldCwvInstrumentation() {
     attribution: {
       environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'build',
       gitSha: process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || null,
-      deploymentId: process.env.VERCEL_DEPLOYMENT_ID || null,
-      routeAndDeviceAvailableInProvider: instrumentationActive
+      deploymentId: process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_URL || null,
+      routeAndDeviceAvailableInProvider: true
     },
     publicCrux: {
       productionOrigin: 'https://www.axante.it',
@@ -80,10 +74,15 @@ function installFieldCwvInstrumentation() {
       sessionReplay: false
     },
     provider: {
-      sameOriginScript: instrumentationActive,
-      endpointConfigured: Boolean(endpoint)
+      name: 'axante-same-origin-rum',
+      endpoint: '/api/vitals',
+      transport: 'sendBeacon/fetch keepalive',
+      storage: 'Vercel runtime logs',
+      thirdPartyRuntime: false,
+      recurringProviderFeeRequired: false,
+      runtimeVerification: process.env.VERCEL ? 'DEPLOYMENT BUILD — HEALTHCHECK REQUIRED' : 'CODE READY — DEPLOYMENT HEALTHCHECK REQUIRED'
     },
-    note: 'This build status never claims field CWV compliance. p75 promotion requires sufficient real-user field evidence; otherwise the verdict remains INSUFFICIENT SAMPLE.'
+    note: 'This build never claims field CWV compliance. Provider code is active on the six target routes, but p75 promotion requires deployment health verification plus a sufficient representative real-user sample; otherwise the verdict remains INSUFFICIENT SAMPLE.'
   };
 
   fs.mkdirSync(qaOutput, { recursive: true });
@@ -118,7 +117,7 @@ for (const token of ['/servizi-premium.css?v=17.0','/servizi-premium.js?v=17.0',
   if (!services.includes(token)) throw new Error(`Services decision journey missing published token: ${token}`);
 }
 
-const requiredFiles = ['home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','apple-design.css','apple-design.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','field-cwv-evidence.json','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-store.jpg','assets/media/casarossa-product.jpg','assets/media/unicart.jpg','assets/media/unicart-catalog.jpg','assets/media/unicart-auctions.jpg','assets/media/carabetta.jpg','assets/media/carabetta-logo.png','assets/media/carabetta-category.jpg','assets/media/carabetta-new.jpg','assets/media/weblab.jpg','assets/media/tda.jpg'];
+const requiredFiles = ['home-v5.css','home-v5.js','portfolio-v5.css','portfolio-mobile-performance.css','fixes-v6.css','fixes-v6.js','apple-design.css','apple-design.js','foundation-mobile-hotfix.css','servizi-premium.css','servizi-premium.js','field-cwv-client.js','field-cwv-evidence.json','assets/vendor/web-vitals.js','assets/asset-manifest.json','assets/media/axante-logo.png','assets/media/axante-share-v1.png','assets/media/casarossa.jpg','assets/media/casarossa-store.jpg','assets/media/casarossa-product.jpg','assets/media/unicart.jpg','assets/media/unicart-catalog.jpg','assets/media/unicart-auctions.jpg','assets/media/carabetta.jpg','assets/media/carabetta-logo.png','assets/media/carabetta-category.jpg','assets/media/carabetta-new.jpg','assets/media/weblab.jpg','assets/media/tda.jpg'];
 for (const relative of requiredFiles) if (!fs.existsSync(path.join(output, relative))) throw new Error(`Published file is missing: ${relative}`);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(output, 'assets', 'asset-manifest.json'), 'utf8'));
