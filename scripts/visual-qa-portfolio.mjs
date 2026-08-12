@@ -53,7 +53,8 @@ for (const [width,height] of viewports) {
     const chapterCollisions = innerWidth >= 1366 ? chapters.filter(ch => overlaps(rect(ch.querySelector('.case-visual')), rect(ch.querySelector('.case-copy')))).length : 0;
     const casaMedia = rect(document.querySelector('.case-casa-media'));
     const casaSection = rect(document.querySelector('.case-casa'));
-    const proofDominance = Boolean(casaMedia && casaSection && casaMedia.width >= innerWidth * .82 && casaMedia.height >= Math.min(innerHeight * .55, 420));
+    const mobileProof = innerWidth < 700;
+    const proofDominance = Boolean(casaMedia && casaSection && casaMedia.width >= innerWidth * (mobileProof ? .94 : .82) && casaMedia.height >= (mobileProof ? innerWidth * .68 : Math.min(innerHeight * .55, 420)));
     return {
       scrollWidth:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth), clientWidth:document.documentElement.clientWidth,
       chapters:chapters.length,
