@@ -7,7 +7,8 @@
     "build": "node scripts/cache-assets.mjs && node scripts/generate-og-image.mjs && node scripts/generate-home.mjs && node scripts/generate-pages.mjs && node scripts/generate-portfolio-v4.mjs && node scripts/apply-v5-overrides.mjs && node scripts/apply-apple-design.mjs && node scripts/apply-apple-design-v2-fixed.mjs && node scripts/apply-mobile-performance-v2.mjs && node scripts/apply-case-studies-v3.mjs && node scripts/apply-live-proof-v4.mjs && node scripts/apply-trust-proof-v5.mjs && node scripts/apply-services-navigator-v6.mjs && node scripts/apply-contact-intake-v7.mjs && node scripts/apply-about-operating-v8.mjs && node scripts/apply-home-proof-spine-v10.mjs && node scripts/apply-home-decision-room-v11-safe.mjs && node scripts/apply-portfolio-case-gallery-v12.mjs && node scripts/apply-foundation-v13.mjs && node scripts/apply-home-reactor-v14.mjs && node scripts/generate-search-surface.mjs && node scripts/publish-site.mjs && node scripts/qa-site.mjs && node scripts/qa-build-ownership.mjs && node scripts/qa-search-ai.mjs && node scripts/qa-page-experience.mjs"
   },
   "dependencies": {
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "web-vitals": "6.0.1"
   },
   "engines": {
     "node": ">=20.9.0"
