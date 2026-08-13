@@ -72,29 +72,26 @@ for (const [width,height] of viewports) {
   if (!metrics.hero.includes('Partiamo dal problema')) failures.push(`${width}x${height}: wrong hero`);
   for (const name of requiredAssets) if (!metrics.assets.some(src=>src.includes(name))) failures.push(`${width}x${height}: missing proof asset ${name}`);
   if (metrics.assets.some(src=>/^https?:/i.test(src))) failures.push(`${width}x${height}: runtime hotlink in proof assets`);
-  if (width <= 700 && metrics.visiblePanels !== 3) failures.push(`${width}x${height}: mobile must expose all proof chapters`);
-  if (width > 700 && metrics.visiblePanels !== 1) failures.push(`${width}x${height}: desktop/tablet must expose one proof chapter`);
+  if (metrics.visiblePanels !== 1) failures.push(`${width}x${height}: proof switcher must expose exactly one chapter, got ${metrics.visiblePanels}`);
   if (width <= 1024 && (!metrics.mobileMenuVisible || metrics.desktopNavVisible)) failures.push(`${width}x${height}: global mobile header regression`);
   if (metrics.surfaces.problemBg === metrics.surfaces.proofBg || metrics.surfaces.systemBg === metrics.surfaces.proofBg) failures.push(`${width}x${height}: scene surface differentiation missing ${JSON.stringify(metrics.surfaces)}`);
   if (width >= 1366 && metrics.activeMediaWidth < width * .78) failures.push(`${width}x${height}: media-led proof is not materially viewport-scale (${metrics.activeMediaWidth}px)`);
   if (metrics.targets.some(t => t.h < 44 || t.w < 44)) failures.push(`${width}x${height}: undersized primary control ${JSON.stringify(metrics.targets.filter(t=>t.h<44||t.w<44))}`);
   if (errors.length) failures.push(`${width}x${height}: console/page errors ${errors.join(' | ')}`);
 
-  if (width > 700) {
-    const tabs = page.locator('[data-proof-tab]');
-    for (const index of [0,1,2,0,2,1]) await tabs.nth(index).click({ force:true });
-    await page.waitForTimeout(750);
-    const state = await page.evaluate(() => ({
-      selected:[...document.querySelectorAll('[data-proof-tab]')].findIndex(x=>x.getAttribute('aria-selected')==='true'),
-      active:[...document.querySelectorAll('[data-proof-panel]')].findIndex(x=>x.classList.contains('is-active')),
-      visible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>!x.hidden && getComputedStyle(x).display!=='none').length,
-      ariaVisible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>x.getAttribute('aria-hidden')==='false').length,
-      running:[...document.querySelectorAll('[data-proof-panel]')].reduce((n,x)=>n+x.getAnimations({subtree:true}).filter(a=>a.playState==='running').length,0)
-    }));
-    if (state.selected!==1 || state.active!==1 || state.visible!==1 || state.ariaVisible!==1 || state.running!==0) failures.push(`${width}x${height}: rapid interaction not deterministic ${JSON.stringify(state)}`);
-    await tabs.nth(1).focus(); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(700);
-    if (await tabs.nth(2).getAttribute('aria-selected') !== 'true') failures.push(`${width}x${height}: keyboard interaction failed`);
-  }
+  const tabs = page.locator('[data-proof-tab]');
+  for (const index of [0,1,2,0,2,1]) await tabs.nth(index).click({ force:true });
+  await page.waitForTimeout(width > 700 ? 750 : 100);
+  const state = await page.evaluate(() => ({
+    selected:[...document.querySelectorAll('[data-proof-tab]')].findIndex(x=>x.getAttribute('aria-selected')==='true'),
+    active:[...document.querySelectorAll('[data-proof-panel]')].findIndex(x=>x.classList.contains('is-active')),
+    visible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>!x.hidden && getComputedStyle(x).display!=='none').length,
+    ariaVisible:[...document.querySelectorAll('[data-proof-panel]')].filter(x=>x.getAttribute('aria-hidden')==='false').length,
+    running:[...document.querySelectorAll('[data-proof-panel]')].reduce((n,x)=>n+x.getAnimations({subtree:true}).filter(a=>a.playState==='running').length,0)
+  }));
+  if (state.selected!==1 || state.active!==1 || state.visible!==1 || state.ariaVisible!==1 || state.running!==0) failures.push(`${width}x${height}: rapid interaction not deterministic ${JSON.stringify(state)}`);
+  await tabs.nth(1).focus(); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(width > 700 ? 700 : 100);
+  if (await tabs.nth(2).getAttribute('aria-selected') !== 'true') failures.push(`${width}x${height}: keyboard interaction failed`);
 
   await page.screenshot({ path:path.join(out, `services-${width}x${height}.png`), fullPage:true });
   await context.close();
@@ -111,11 +108,11 @@ for (const [width,height] of [[390,844],[1366,768]]) {
   }));
   if (reduced.hiddenReveal) failures.push(`${width}x${height}: reduced-motion hides content`);
   if (reduced.transitions.some(v=>v.split(',').some(x=>parseFloat(x)>0))) failures.push(`${width}x${height}: reduced-motion transition remains active`);
-  if (width===390 && reduced.panelCount!==3) failures.push(`${width}x${height}: reduced-motion mobile must expose all proof chapters`);
+  if (reduced.panelCount!==1) failures.push(`${width}x${height}: reduced-motion proof switcher must expose one chapter, got ${reduced.panelCount}`);
   await page.screenshot({ path:path.join(out, `services-${width}x${height}-reduced.png`), fullPage:true });
   await context.close();
 }
 
 await browser.close();
 if (failures.length) { console.error('SERVICES VISUAL QA FAILED'); failures.forEach(x=>console.error(`- ${x}`)); process.exit(1); }
-console.log(`SERVICES VISUAL QA PASSED: ${viewports.length} breakpoints, 5 scene families, viewport-scale proof, content coverage, touch/header geometry, rapid interaction and reduced-motion.`);
+console.log(`SERVICES VISUAL QA PASSED: ${viewports.length} breakpoints, 5 scene families, viewport-scale proof, content coverage, touch/header geometry, deterministic proof switcher, keyboard interaction and reduced-motion.`);
