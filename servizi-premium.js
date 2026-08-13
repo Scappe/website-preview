@@ -5,7 +5,7 @@
 
   const tabs = [...root.querySelectorAll('[data-proof-tab]')];
   const panels = [...root.querySelectorAll('[data-proof-panel]')];
-  const desktop = window.matchMedia('(min-width: 701px)');
+  const wide = window.matchMedia('(min-width: 701px)');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   let active = 0;
   let token = 0;
@@ -18,7 +18,7 @@
 
   const cancelAll = () => panels.forEach(cancelAnimations);
 
-  const commitDesktopState = index => {
+  const commitState = index => {
     cancelAll();
     tabs.forEach((tab, i) => {
       const on = i === index;
@@ -37,30 +37,20 @@
     active = index;
   };
 
-  const exposeMobileState = () => {
-    cancelAll();
-    tabs.forEach((tab, i) => {
-      tab.setAttribute('aria-selected', String(i === active));
-      tab.setAttribute('tabindex', '-1');
-    });
-    panels.forEach(panel => {
-      panel.hidden = false;
-      panel.classList.add('is-active');
-      panel.setAttribute('aria-hidden', 'false');
-      panel.style.display = '';
-      panel.style.opacity = '';
-      panel.style.transform = '';
-    });
-  };
-
   const activate = async (index, focus = false) => {
-    if (!desktop.matches || index < 0 || index >= panels.length) return;
+    if (index < 0 || index >= panels.length) return;
 
     const run = ++token;
     const committed = active;
-    commitDesktopState(committed);
+    commitState(committed);
 
     if (index === committed) {
+      if (focus) tabs[index]?.focus();
+      return;
+    }
+
+    if (!wide.matches || reduce.matches || !panels[index]?.animate) {
+      commitState(index);
       if (focus) tabs[index]?.focus();
       return;
     }
@@ -77,12 +67,6 @@
     to.style.display = '';
     to.setAttribute('aria-hidden', 'false');
     to.classList.add('is-active');
-
-    if (reduce.matches || !to.animate) {
-      if (run === token) commitDesktopState(index);
-      if (focus) tabs[index]?.focus();
-      return;
-    }
 
     const fromMedia = from.querySelector('.proof-media');
     const toMedia = to.querySelector('.proof-media');
@@ -116,14 +100,14 @@
     await Promise.all(animations.map(animation => animation.finished.catch(() => null)));
     if (run !== token) return;
 
-    commitDesktopState(index);
+    commitState(index);
     if (focus) tabs[index]?.focus();
   };
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => activate(index));
     tab.addEventListener('keydown', event => {
-      if (!desktop.matches || !['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+      if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
       let next = index;
       if (event.key === 'Home') next = 0;
@@ -136,12 +120,10 @@
 
   const sync = () => {
     token++;
-    if (desktop.matches) commitDesktopState(Math.min(active, tabs.length - 1));
-    else exposeMobileState();
+    commitState(Math.min(active, tabs.length - 1));
   };
 
-  desktop.addEventListener?.('change', sync);
+  wide.addEventListener?.('change', sync);
   reduce.addEventListener?.('change', sync);
-  commitDesktopState(0);
-  sync();
+  commitState(0);
 })();
